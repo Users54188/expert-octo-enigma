@@ -39,3 +39,30 @@ ml:
   training:
     min_data_points: 100
     test_ratio: 0.2
+
+# 交易系统
+trading:
+  # 券商配置
+  broker:
+    type: "easytrader"
+    service_url: "http://localhost:8888"
+    broker_type: "yh"  # 银河证券（最稳定），支持: ht(华泰), yh(银河), yjb(佣金宝), xq(雪球)
+    username: "${BROKER_USERNAME}"
+    password: "${BROKER_PASSWORD}"
+    exe_path: ""  # 券商客户端路径（如需要）
+
+  # 风险管理
+  risk:
+    initial_capital: 100.0      # 初始资金（元）
+    max_single_position: 0.3    # 单只股票最多投入总资金30%
+    max_positions: 3           # 最多持仓3只股票
+    max_daily_loss: 0.1        # 单日亏损10%时全部平仓
+    min_order_amount: 100.0    # 最小下单金额100元
+    stop_loss_percent: 0.05    # 单只股票亏损5%止损
+
+  # 自动交易
+  auto_trade:
+    enabled: false             # 是否启用自动交易
+    check_interval: "1m"       # 检查间隔
+    ai_threshold: 0.7          # AI信号阈值
+    ml_confidence: 0.6         # ML置信度阈值
