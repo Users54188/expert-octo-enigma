@@ -1,5 +1,7 @@
-version: '3'
+version: '3.8'
+
 services:
+  # Go API服务
   cloudquant:
     build: .
     ports:
@@ -7,5 +9,37 @@ services:
     volumes:
       - ./data:/app/data
       - ./config.yaml:/app/config.yaml
+      - ./models:/app/models
     environment:
       - LOG_LEVEL=info
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - BROKER_USERNAME=${BROKER_USERNAME}
+      - BROKER_PASSWORD=${BROKER_PASSWORD}
+    depends_on:
+      - easytrader
+    restart: unless-stopped
+
+  # Python EasyTrader服务
+  easytrader:
+    build:
+      context: ./trading/broker_service
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    environment:
+      - BROKER_TYPE=yh
+      - BROKER_USERNAME=${BROKER_USERNAME}
+      - BROKER_PASSWORD=${BROKER_PASSWORD}
+      - EASYTRADER_PORT=8888
+    volumes:
+      # 如果需要访问券商客户端，可以挂载
+      # - /path/to/broker:/broker
+    restart: unless-stopped
+    # 如果券商客户端需要图形界面，取消下面的注释
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]

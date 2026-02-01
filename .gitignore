@@ -15,3 +15,28 @@ vendor/
 ehthumbs.db
 Icon?
 Thumbs.db
+
+# Environment variables (sensitive)
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Models
+models/*.model
+models/*.pkl
+
