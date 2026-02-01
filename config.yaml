@@ -16,3 +16,26 @@ http:
 # 日志
 log:
   level: info
+
+# DeepSeek LLM
+llm:
+  provider: deepseek
+  api_key: "${DEEPSEEK_API_KEY}"
+  model: "deepseek-chat"
+  timeout: 10s
+  max_tokens: 200
+
+# 机器学习
+ml:
+  model_type: "decision_tree"
+  model_path: "./models/dt.model"
+  max_tree_depth: 10
+  train_interval: "7d"
+
+  features:
+    lookback_days: 20
+    lookahead_days: 3
+
+  training:
+    min_data_points: 100
+    test_ratio: 0.2
