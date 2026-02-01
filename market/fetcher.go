@@ -47,10 +47,10 @@ func FetchTick(symbol string) (*Tick, error) {
 	low, _ := strconv.ParseFloat(data[5], 64)
 	curr, _ := strconv.ParseFloat(data[3], 64)
 	volume, _ := strconv.ParseInt(data[8], 10, 64)
-	
+
 	date := data[30]
 	timeStr := data[31]
-	
+
 	timestamp, _ := time.ParseInLocation("2006-01-02 15:04:05", date+" "+timeStr, time.Local)
 
 	return &Tick{
@@ -73,11 +73,24 @@ type sinaKLine struct {
 	Volume string `json:"volume"`
 }
 
+var historicalDataFetcher = defaultHistoricalDataFetcher
+
 // FetchHistoricalData fetches historical K-line data for a symbol
 func FetchHistoricalData(symbol string, days int) ([]KLine, error) {
-	// scale=240 is daily
+	return historicalDataFetcher(symbol, days)
+}
+
+func SetHistoricalDataFetcher(fetcher func(symbol string, days int) ([]KLine, error)) {
+	if fetcher == nil {
+		historicalDataFetcher = defaultHistoricalDataFetcher
+		return
+	}
+	historicalDataFetcher = fetcher
+}
+
+func defaultHistoricalDataFetcher(symbol string, days int) ([]KLine, error) {
 	url := fmt.Sprintf("http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=%s&scale=240&ma=no&datalen=%d", symbol, days)
-	
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -96,7 +109,7 @@ func FetchHistoricalData(symbol string, days int) ([]KLine, error) {
 		low, _ := strconv.ParseFloat(d.Low, 64)
 		close, _ := strconv.ParseFloat(d.Close, 64)
 		volume, _ := strconv.ParseInt(d.Volume, 10, 64)
-		
+
 		var timestamp time.Time
 		if len(d.Day) > 10 {
 			timestamp, _ = time.ParseInLocation("2006-01-02 15:04:05", d.Day, time.Local)

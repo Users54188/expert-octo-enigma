@@ -47,9 +47,36 @@ docker-compose up --build
 - **GET** `/api/klines/{symbol}?limit=100`
 - **示例**：`/api/klines/sh600000?limit=100`
 
+### 5. DeepSeek AI 分析
+- **GET** `/api/analysis/{symbol}`
+- **示例**：`/api/analysis/sh600000`
+
+### 6. DeepSeek AI 批量分析
+- **GET** `/api/analysis/batch?symbols=sh600000,sh601398`
+
+### 7. 机器学习预测
+- **GET** `/api/predict/{symbol}`
+
+### 8. 触发模型训练
+- **POST** `/api/train`
+
 ## 项目结构
-- `cmd/`: 主程序入口。
+- `cmd/`: 主程序入口、训练脚本。
 - `market/`: 行情获取与指标计算。
 - `http/`: HTTP 服务器与路由处理。
 - `db/`: 数据库操作。
+- `llm/`: DeepSeek LLM 集成。
+- `ml/`: 特征工程与模型实现。
 - `data/`: 存储 SQLite 数据库文件。
+
+## DeepSeek 配置
+- 在 `config.yaml` 中配置 `llm.api_key` 或通过环境变量 `DEEPSEEK_API_KEY` 注入。
+- 模型默认使用 `deepseek-chat`。
+
+## 模型训练
+使用训练脚本生成模型：
+```bash
+go run ./cmd/train_model --symbol=sh600000 --days=500
+```
+
+训练完成后模型将保存至 `config.yaml` 中的 `ml.model_path`。
