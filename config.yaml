@@ -66,3 +66,161 @@ trading:
     check_interval: "1m"       # 检查间隔
     ai_threshold: 0.7          # AI信号阈值
     ml_confidence: 0.6         # ML置信度阈值
+
+  # 多策略框架
+  strategies:
+    - name: "ma_strategy"
+      type: "ma"
+      enabled: true
+      weight: 0.3
+      priority: 1
+      parameters:
+        short_period: 5
+        long_period: 20
+        min_volume: 1000000
+        max_change: 0.05
+    - name: "rsi_strategy"
+      type: "rsi"
+      enabled: true
+      weight: 0.25
+      priority: 2
+      parameters:
+        period: 14
+        oversold: 30.0
+        overbought: 70.0
+        min_volume: 500000
+        price_filter: true
+    - name: "ai_strategy"
+      type: "ai"
+      enabled: true
+      weight: 0.4
+      priority: 3
+      parameters:
+        threshold: 0.7
+        confidence: 0.6
+        analysis_interval: "1h"
+        market_context: true
+        risk_analysis: true
+    - name: "ml_strategy"
+      type: "ml"
+      enabled: true
+      weight: 0.3
+      priority: 4
+      parameters:
+        lookback_days: 20
+        confidence: 0.6
+        features: ["price", "volume", "ma5", "ma10", "rsi"]
+        update_frequency: "1h"
+        use_real_time: true
+
+  # 策略调度器
+  scheduler:
+    enabled: true
+    interval: "1m"
+    cron_expression: ""
+
+  # 高级风险管理
+  portfolio_risk:
+    max_industry_exposure: 0.6
+    max_sector_exposure: 0.8
+    max_symbol_exposure: 0.3
+    concentration_alert: 0.4
+
+  volatility_risk:
+    max_volatility: 0.3
+    volatility_threshold: 0.2
+    lookback_period: 20
+    adjustment_factor: 0.8
+
+  cooldown_risk:
+    min_trade_interval: "5m"
+    max_daily_trades: 20
+    min_order_interval: "1m"
+    max_weekly_trades: 100
+    blacklist_duration: "24h"
+    enable_cooldown: true
+
+  ai_risk:
+    enabled: true
+    analysis_interval: "1h"
+    cache_expiry: "6h"
+    risk_threshold: 0.7
+    auto_alert: true
+    deep_learning: true
+    sentiment_analysis: true
+    news_analysis: false
+
+  # 组合管理
+  portfolio:
+    rebalance_frequency: "1d"
+    max_turnover: 0.2
+    min_position_weight: 0.05
+    max_position_weight: 0.4
+    target_return: 0.15
+    risk_free_rate: 0.03
+
+  # 组合优化器
+  optimizer:
+    method: "equal_weight"
+    risk_free_rate: 0.03
+    lookback_period: 252
+    min_weight: 0.05
+    max_weight: 0.4
+    rebalance_period: 30
+
+# 实时监控与告警系统
+monitoring:
+  websocket:
+    enabled: true
+    port: 8080
+    max_connections: 100
+    
+  # 告警系统
+  alerts:
+    enabled: true
+    channels:
+      email:
+        enabled: false
+        smtp_host: ""
+        smtp_port: 587
+        username: ""
+        password: ""
+        to: ""
+      feishu:
+        enabled: true
+        webhook: "${FEISHU_WEBHOOK}"
+        rate_limit:
+          max_per_hour: 10
+          max_per_day: 100
+          cooldown: "5m"
+      dingding:
+        enabled: false
+        webhook: "${DINGDING_WEBHOOK}"
+        rate_limit:
+          max_per_hour: 20
+          max_per_day: 200
+          cooldown: "3m"
+
+# 回测系统
+backtest:
+  enabled: true
+  default_config:
+    start_date: "2023-01-01"
+    end_date: "2024-01-01"
+    initial_capital: 100000.0
+    commission: 0.001
+    slippage: 0.0005
+    risk_free_rate: 0.03
+    max_drawdown_limit: 0.2
+    realtime: false
+  
+  # 参数优化
+  parameter_search:
+    method: "grid_search"
+    metric: "sharpe_ratio"
+    max_iterations: 100
+    min_samples: 10
+    parallel: false
+    max_workers: 4
+    early_stopping: true
+    patience: 10
