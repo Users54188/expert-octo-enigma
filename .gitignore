@@ -1,0 +1,17 @@
+# Binaries
+bin/
+cloudquant
+
+# Data
+data/*.db
+test.db
+
+# Dependency directories
+vendor/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db

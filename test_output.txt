@@ -1,0 +1,8 @@
+=== RUN   TestCalculateMA
+--- PASS: TestCalculateMA (0.00s)
+=== RUN   TestCalculateRSI
+--- PASS: TestCalculateRSI (0.00s)
+=== RUN   TestCalculateMACD
+--- PASS: TestCalculateMACD (0.00s)
+PASS
+ok  	cloudquant/market	(cached)
