@@ -1,0 +1,358 @@
+{
+  "申万一级行业分类": {
+    "description": "A股申万一级行业分类映射（前50只热门股票示例）",
+    "last_updated": "2024-01-15",
+    "data": [
+      {
+        "symbol": "sh600000",
+        "name": "浦发银行",
+        "industry": "银行",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh601398",
+        "name": "工商银行",
+        "industry": "银行",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh600519",
+        "name": "贵州茅台",
+        "industry": "食品饮料",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh600036",
+        "name": "招商银行",
+        "industry": "银行",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sz000858",
+        "name": "五粮液",
+        "industry": "食品饮料",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh601318",
+        "name": "中国平安",
+        "industry": "非银金融",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sz000001",
+        "name": "平安银行",
+        "industry": "银行",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh600030",
+        "name": "中信证券",
+        "industry": "非银金融",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh601166",
+        "name": "兴业银行",
+        "industry": "银行",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh600887",
+        "name": "伊利股份",
+        "industry": "食品饮料",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sz000333",
+        "name": "美的集团",
+        "industry": "家用电器",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh601888",
+        "name": "中国中免",
+        "industry": "商贸零售",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh600276",
+        "name": "恒瑞医药",
+        "industry": "医药生物",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sz300750",
+        "name": "宁德时代",
+        "industry": "电力设备",
+        "sector": "创业板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sz000651",
+        "name": "格力电器",
+        "industry": "家用电器",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh601012",
+        "name": "隆基绿能",
+        "industry": "电力设备",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh600031",
+        "name": "三一重工",
+        "industry": "机械设备",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh600028",
+        "name": "中国石化",
+        "industry": "石油石化",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh600019",
+        "name": "宝钢股份",
+        "industry": "钢铁",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sz002594",
+        "name": "比亚迪",
+        "industry": "汽车",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh601336",
+        "name": "新华保险",
+        "industry": "非银金融",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sz300059",
+        "name": "东方财富",
+        "industry": "非银金融",
+        "sector": "创业板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh600585",
+        "name": "海螺水泥",
+        "industry": "建筑材料",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sz000963",
+        "name": "华东医药",
+        "industry": "医药生物",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh601766",
+        "name": "中国中车",
+        "industry": "机械设备",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sz002415",
+        "name": "海康威视",
+        "industry": "电子",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh601668",
+        "name": "中国建筑",
+        "industry": "建筑装饰",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh600690",
+        "name": "海尔智家",
+        "industry": "家用电器",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sz300760",
+        "name": "迈瑞医疗",
+        "industry": "医药生物",
+        "sector": "创业板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh601985",
+        "name": "中国核电",
+        "industry": "公用事业",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sh600900",
+        "name": "长江电力",
+        "industry": "公用事业",
+        "sector": "主板",
+        "market_cap": "大盘"
+      },
+      {
+        "symbol": "sz002142",
+        "name": "宁波银行",
+        "industry": "银行",
+        "sector": "主板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sh600201",
+        "name": "上海医药",
+        "industry": "医药生物",
+        "sector": "主板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sh600547",
+        "name": "山东黄金",
+        "industry": "有色金属",
+        "sector": "主板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sz300014",
+        "name": "亿纬锂能",
+        "industry": "电力设备",
+        "sector": "创业板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sz300274",
+        "name": "阳光电源",
+        "industry": "电力设备",
+        "sector": "创业板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sh600438",
+        "name": "通威股份",
+        "industry": "电力设备",
+        "sector": "主板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sz002648",
+        "name": "卫星化学",
+        "industry": "基础化工",
+        "sector": "主板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sh603259",
+        "name": "药明康德",
+        "industry": "医药生物",
+        "sector": "主板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sz300124",
+        "name": "汇川技术",
+        "industry": "电力设备",
+        "sector": "创业板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sz000725",
+        "name": "京东方A",
+        "industry": "电子",
+        "sector": "主板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sh601899",
+        "name": "紫金矿业",
+        "industry": "有色金属",
+        "sector": "主板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sh600048",
+        "name": "保利发展",
+        "industry": "房地产",
+        "sector": "主板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sz002475",
+        "name": "立讯精密",
+        "industry": "电子",
+        "sector": "主板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sz300144",
+        "name": "宋城演艺",
+        "industry": "社会服务",
+        "sector": "创业板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sh600015",
+        "name": "华夏银行",
+        "industry": "银行",
+        "sector": "主板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sz000063",
+        "name": "中兴通讯",
+        "industry": "通信",
+        "sector": "主板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sh688981",
+        "name": "中芯国际",
+        "industry": "电子",
+        "sector": "科创板",
+        "market_cap": "中盘"
+      },
+      {
+        "symbol": "sh688111",
+        "name": "金山办公",
+        "industry": "计算机",
+        "sector": "科创板",
+        "market_cap": "中盘"
+      }
+    ],
+    "industry_list": [
+      "银行", "非银金融", "食品饮料", "家用电器", "商贸零售",
+      "医药生物", "电力设备", "机械设备", "石油石化", "钢铁",
+      "汽车", "建筑材料", "电子", "建筑装饰", "公用事业",
+      "有色金属", "基础化工", "房地产", "通信", "计算机",
+      "社会服务"
+    ]
+  }
+}

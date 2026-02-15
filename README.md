@@ -32,6 +32,13 @@ CloudQuantBot 使用 `config.yaml` 读取配置，并支持从环境变量注入
 | `DB_PATH` | 数据库路径（需要在 `config.yaml` 中引用） | 可选 |
 
 ### 本地运行（仅行情和分析功能）
+
+#### 方法一：使用启动脚本（推荐）
+```bash
+./scripts/start_local.sh
+```
+
+#### 方法二：手动启动
 1. 安装依赖：
    ```bash
    go mod tidy
@@ -41,6 +48,18 @@ CloudQuantBot 使用 `config.yaml` 读取配置，并支持从环境变量注入
    go run main.go
    ```
 服务将在 http://localhost:8080 启动
+
+#### 开发模式（带热重载）
+```bash
+./scripts/start_dev.sh
+```
+
+#### 本地模式特点
+- 不依赖券商配置
+- 使用 Mock 数据源生成模拟行情
+- 支持离线开发和测试
+- 提供完整的 API 功能
+- 支持可视化 Dashboard
 
 ### Docker 运行（完整功能，包含实盘交易）
 1. 创建 `.env` 文件配置环境变量：
@@ -112,17 +131,48 @@ CloudQuantBot 使用 `config.yaml` 读取配置，并支持从环境变量注入
 ### 8. 触发模型训练
 - **POST** `/api/train`
 
+### 行业分析 API (新增)
+
+### 9. 获取股票行业信息
+- **GET** `/api/stock/{symbol}/industry`
+- **示例**：`/api/stock/sh600000/industry`
+- **返回**：
+  ```json
+  {
+    "symbol": "sh600000",
+    "name": "浦发银行",
+    "industry": "银行",
+    "sector": "主板",
+    "market_cap": "大盘"
+  }
+  ```
+
+### 10. 获取行业暴露分析
+- **GET** `/api/portfolio/industry_exposure`
+- **返回**：
+  ```json
+  [
+    {
+      "industry": "银行",
+      "weight": 0.3,
+      "benchmark": 0.13,
+      "active_share": 0.17,
+      "symbols": ["sh600000", "sh601398"]
+    }
+  ]
+  ```
+
 ### 实盘交易 API (Phase 3)
 
-### 9. 获取投资组合
+### 11. 获取投资组合
 - **GET** `/api/trading/portfolio`
 - **返回**：持仓信息列表
 
-### 10. 获取账户余额
+### 12. 获取账户余额
 - **GET** `/api/trading/balance`
 - **返回**：账户余额信息
 
-### 11. 买入股票
+### 13. 买入股票
 - **POST** `/api/trading/buy`
 - **请求体**：
   ```json
@@ -134,7 +184,7 @@ CloudQuantBot 使用 `config.yaml` 读取配置，并支持从环境变量注入
   ```
 - **返回**：订单ID
 
-### 12. 卖出股票
+### 14. 卖出股票
 - **POST** `/api/trading/sell`
 - **请求体**：
   ```json
@@ -146,7 +196,7 @@ CloudQuantBot 使用 `config.yaml` 读取配置，并支持从环境变量注入
   ```
 - **返回**：订单ID
 
-### 13. 撤销委托
+### 15. 撤销委托
 - **POST** `/api/trading/cancel`
 - **请求体**：
   ```json
@@ -155,15 +205,15 @@ CloudQuantBot 使用 `config.yaml` 读取配置，并支持从环境变量注入
   }
   ```
 
-### 14. 获取订单历史
+### 16. 获取订单历史
 - **GET** `/api/trading/orders?limit=50`
 - **返回**：订单列表
 
-### 15. 获取成交记录
+### 17. 获取成交记录
 - **GET** `/api/trading/trades?limit=50`
 - **返回**：成交记录列表
 
-### 16. 获取绩效统计
+### 18. 获取绩效统计
 - **GET** `/api/trading/performance`
 - **返回**：
   ```json
@@ -177,22 +227,115 @@ CloudQuantBot 使用 `config.yaml` 读取配置，并支持从环境变量注入
   }
   ```
 
-### 17. 获取日度盈亏
+### 19. 获取日度盈亏
 - **GET** `/api/trading/daily_pnl?days=30`
 - **返回**：日度盈亏数据
 
-### 18. 获取风险指标
+### 20. 获取风险指标
 - **GET** `/api/trading/risk`
 - **返回**：当前风险状态
 
-### 19. 启动自动交易
+### 21. 启动自动交易
 - **POST** `/api/trading/auto_trade/start`
 
-### 20. 停止自动交易
+### 22. 停止自动交易
 - **POST** `/api/trading/auto_trade/stop`
 
-### 21. 查看自动交易状态
+### 23. 查看自动交易状态
 - **GET** `/api/trading/auto_trade/status`
+
+### Dashboard API (新增)
+
+### 24. 获取实时绩效指标
+- **GET** `/api/dashboard/metrics`
+- **返回**：
+  ```json
+  {
+    "total_return": 0.15,
+    "annualized_return": 0.18,
+    "sharpe_ratio": 1.8,
+    "sortino_ratio": 2.3,
+    "calmar_ratio": 3.5,
+    "max_drawdown": 0.04,
+    "win_rate": 0.62,
+    "profit_factor": 2.1
+  }
+  ```
+
+### 25. 获取资金曲线
+- **GET** `/api/dashboard/equity?days=30`
+- **返回**：资金曲线数据
+
+### 26. 获取持仓列表
+- **GET** `/api/dashboard/positions`
+- **返回**：实时持仓信息
+
+### 27. 获取风险指标
+- **GET** `/api/dashboard/risk`
+- **返回**：实时风险指标
+
+### 28. 获取完整快照
+- **GET** `/api/dashboard/snapshot`
+- **返回**：包含所有指标、持仓、风险的完整快照
+
+### 性能分析 API (新增)
+
+### 29. 获取绩效指标详情
+- **GET** `/api/performance/metrics`
+- **返回**：详细的绩效分析指标
+
+### 30. 获取权益历史
+- **GET** `/api/performance/equity?days=30`
+- **返回**：历史权益数据
+
+### 31. 获取交易记录
+- **GET** `/api/performance/trades?limit=50`
+- **返回**：所有交易记录
+
+### 32. 获取回撤信息
+- **GET** `/api/performance/drawdown`
+- **返回**：当前回撤和最大回撤
+
+### 33. 获取统计信息
+- **GET** `/api/performance/stats`
+- **返回**：
+  ```json
+  {
+    "total_trades": 150,
+    "winning_trades": 93,
+    "losing_trades": 57,
+    "win_rate": 0.62,
+    "average_win": 520.5,
+    "average_loss": -315.2,
+    "profit_factor": 2.1,
+    "expectancy": 158.3
+  }
+  ```
+
+### 数据源 API (新增)
+
+### 34. 获取数据源状态
+- **GET** `/api/market/providers`
+- **返回**：
+  ```json
+  {
+    "providers": {
+      "mock": true,
+      "sina": true,
+      "eastmoney": false,
+      "tencent": true
+    },
+    "primary": "mock"
+  }
+  ```
+
+### 35. 获取健康检查
+- **GET** `/api/market/health`
+- **返回**：所有数据源健康状态
+
+### 36. 获取异常检测报告
+- **GET** `/api/market/anomaly`
+- **返回**：异常检测结果
 
 ## 项目架构概述
 CloudQuantBot 由行情采集、AI/ML 分析、多策略执行、实盘交易、监控告警与回测优化等模块组成，核心数据流如下：
@@ -205,10 +348,28 @@ CloudQuantBot 由行情采集、AI/ML 分析、多策略执行、实盘交易、
 ```
 cloudquant/
 ├── cmd/                      # 命令行工具
+├── data/                     # 静态数据
+│   └── industry_mapping.json # 行业分类映射
+├── scripts/                  # 启动脚本
+│   ├── start_local.sh        # 本地一键启动
+│   └── start_dev.sh         # 开发模式（热重载）
 ├── market/                   # 行情获取与指标计算
+│   ├── models.go
+│   ├── fetcher.go
+│   ├── indicators.go
+│   ├── industry.go           # 行业数据模块
+│   ├── anomaly.go            # 异常检测
+│   └── providers/            # 数据源管理
+│       ├── manager.go        # 数据源管理器
+│       ├── sina.go          # 新浪财经
+│       ├── eastmoney.go     # 东方财富
+│       ├── tencent.go       # 腾讯财经
+│       └── mock.go          # Mock数据源
 ├── http/                     # HTTP 服务器与路由处理
 │   ├── handlers.go           # 基础API处理器
 │   ├── trading_handlers.go   # 交易API处理器
+│   ├── dashboard_handlers.go # 可视化API处理器
+│   ├── training.go           # 模型训练
 │   └── server.go             # 服务器
 ├── db/                       # 数据库操作
 ├── llm/                      # DeepSeek LLM 集成
@@ -221,17 +382,28 @@ cloudquant/
 │   ├── position_manager.go   # 持仓管理器
 │   ├── order_executor.go     # 订单执行引擎
 │   ├── signal_handler.go     # 信号处理器（AI+ML融合）
-│   └── trade_history.go      # 交易历史记录
+│   ├── trade_history.go      # 交易历史记录
+│   └── risk/                # 风险管理模块
+│       ├── risk_manager.go
+│       ├── attribution.go    # 风险归因
+│       ├── curve.go         # 资金曲线
+│       └── var.go           # VaR/CVaR计算
+├── monitoring/               # 监控模块
+│   ├── realtime_ws.go        # 实时WebSocket
+│   ├── alert_manager.go      # 告警管理
+│   ├── dashboard.go          # 可视化面板
+│   └── performance.go        # 性能跟踪
 ├── trading/broker_service/   # Python EasyTrader微服务
 │   ├── easytrader_service.py
 │   ├── requirements.txt
 │   └── Dockerfile
-├── data/                     # SQLite 数据库文件
 ├── models/                   # ML模型文件
 ├── config.yaml               # 配置文件
 ├── main.go                   # 主程序入口
 ├── docker-compose.yml        # Docker编排
-└── Dockerfile               # Go服务镜像
+├── Dockerfile               # Go服务镜像
+├── .env.example             # 环境变量示例
+└── README.md                # 项目文档
 ```
 
 ## 配置说明

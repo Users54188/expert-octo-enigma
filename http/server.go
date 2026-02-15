@@ -16,6 +16,7 @@ func NewServer(port int) *Server {
 	mux := http.NewServeMux()
 	RegisterHandlers(mux)
 	RegisterTradingHandlers(mux)
+	RegisterDashboardRoutes(mux)
 
 	return &Server{
 		server: &http.Server{
