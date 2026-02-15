@@ -18,28 +18,28 @@ type SignalHandler struct {
 
 // AISignal AI分析信号
 type AISignal struct {
-	Symbol   string  `json:"symbol"`
-	Trend    string  `json:"trend"`     // 上升/下降/震荡
-	Risk     string  `json:"risk"`      // 高/中/低
-	Action   string  `json:"action"`    // 买入/卖出/持有
-	Reason   string  `json:"reason"`
-	Confidence float64 `json:"confidence"` // 0-1
-	Timestamp time.Time `json:"timestamp"`
+	Symbol     string    `json:"symbol"`
+	Trend      string    `json:"trend"`  // 上升/下降/震荡
+	Risk       string    `json:"risk"`   // 高/中/低
+	Action     string    `json:"action"` // 买入/卖出/持有
+	Reason     string    `json:"reason"`
+	Confidence float64   `json:"confidence"` // 0-1
+	Timestamp  time.Time `json:"timestamp"`
 }
 
 // MLSignal ML预测信号
 type MLSignal struct {
 	Symbol     string    `json:"symbol"`
 	Label      int       `json:"label"`      // 0=卖出, 1=持有, 2=买入
-	Confidence float64   `json:"confidence"`  // 0-1
+	Confidence float64   `json:"confidence"` // 0-1
 	Timestamp  time.Time `json:"timestamp"`
 }
 
 // TradingSignal 交易信号（融合后的信号）
 type TradingSignal struct {
 	Symbol       string    `json:"symbol"`
-	Action       string    `json:"action"`      // buy/sell/hold
-	Confidence   float64   `json:"confidence"`  // 综合置信度
+	Action       string    `json:"action"`     // buy/sell/hold
+	Confidence   float64   `json:"confidence"` // 综合置信度
 	AIAction     string    `json:"ai_action"`
 	AIConfidence float64   `json:"ai_confidence"`
 	MLLabel      int       `json:"ml_label"`

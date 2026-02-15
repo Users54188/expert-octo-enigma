@@ -23,73 +23,73 @@ const (
 
 // Alert 告警结构
 type Alert struct {
-	ID          string    `json:"id"`
-	Level       AlertLevel `json:"level"`
-	Title       string    `json:"title"`
-	Message     string    `json:"message"`
-	Symbol      string    `json:"symbol,omitempty"`
-	Value       float64   `json:"value,omitempty"`
-	Threshold   float64   `json:"threshold,omitempty"`
-	Source      string    `json:"source"`
-	Timestamp   time.Time `json:"timestamp"`
-	Resolved    bool      `json:"resolved"`
-	ResolvedAt  *time.Time `json:"resolved_at,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	ID         string                 `json:"id"`
+	Level      AlertLevel             `json:"level"`
+	Title      string                 `json:"title"`
+	Message    string                 `json:"message"`
+	Symbol     string                 `json:"symbol,omitempty"`
+	Value      float64                `json:"value,omitempty"`
+	Threshold  float64                `json:"threshold,omitempty"`
+	Source     string                 `json:"source"`
+	Timestamp  time.Time              `json:"timestamp"`
+	Resolved   bool                   `json:"resolved"`
+	ResolvedAt *time.Time             `json:"resolved_at,omitempty"`
+	Metadata   map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // AlertChannel 告警渠道配置
 type AlertChannel struct {
-	Type       string                 `json:"type"`       // email, feishu, dingding
-	Enabled    bool                   `json:"enabled"`
-	Settings   map[string]interface{} `json:"settings"`
-	Filters    []AlertFilter          `json:"filters"`
-	RateLimit  RateLimit             `json:"rate_limit"`
+	Type      string                 `json:"type"` // email, feishu, dingding
+	Enabled   bool                   `json:"enabled"`
+	Settings  map[string]interface{} `json:"settings"`
+	Filters   []AlertFilter          `json:"filters"`
+	RateLimit RateLimit              `json:"rate_limit"`
 }
 
 // AlertFilter 告警过滤规则
 type AlertFilter struct {
-	Field      string   `json:"field"`
-	Operator   string   `json:"operator"`   // equals, contains, gt, lt
-	Value      string   `json:"value"`
-	Level      AlertLevel `json:"level,omitempty"`
+	Field    string     `json:"field"`
+	Operator string     `json:"operator"` // equals, contains, gt, lt
+	Value    string     `json:"value"`
+	Level    AlertLevel `json:"level,omitempty"`
 }
 
 // RateLimit 限流配置
 type RateLimit struct {
-	MaxPerHour   int           `json:"max_per_hour"`
-	MaxPerDay    int           `json:"max_per_day"`
-	Cooldown     time.Duration `json:"cooldown"`
+	MaxPerHour int           `json:"max_per_hour"`
+	MaxPerDay  int           `json:"max_per_day"`
+	Cooldown   time.Duration `json:"cooldown"`
 }
 
 // AlertSystem 告警系统
 type AlertSystem struct {
-	mu          sync.RWMutex
-	alerts      map[string]*Alert // 告警ID -> 告警
-	channels    map[string]*AlertChannel // 渠道名称 -> 渠道配置
-	httpClient  *http.Client
-	templates   map[string]string // 模板名称 -> 模板内容
-	rateLimits  map[string]RateTracker // 限流追踪
-	stats       *AlertStats
+	mu         sync.RWMutex
+	alerts     map[string]*Alert        // 告警ID -> 告警
+	channels   map[string]*AlertChannel // 渠道名称 -> 渠道配置
+	httpClient *http.Client
+	templates  map[string]string      // 模板名称 -> 模板内容
+	rateLimits map[string]RateTracker // 限流追踪
+	stats      *AlertStats
 }
 
 // AlertStats 告警统计
 type AlertStats struct {
-	TotalAlerts     int64             `json:"total_alerts"`
-	ActiveAlerts   int64             `json:"active_alerts"`
-	ResolvedAlerts int64             `json:"resolved_alerts"`
+	TotalAlerts    int64                `json:"total_alerts"`
+	ActiveAlerts   int64                `json:"active_alerts"`
+	ResolvedAlerts int64                `json:"resolved_alerts"`
 	ByLevel        map[AlertLevel]int64 `json:"by_level"`
 	ByChannel      map[string]int64     `json:"by_channel"`
-	LastAlert      time.Time           `json:"last_alert"`
-	Uptime         time.Duration       `json:"uptime"`
+	LastAlert      time.Time            `json:"last_alert"`
+	Uptime         time.Duration        `json:"uptime"`
 }
 
 // RateTracker 限流追踪器
 type RateTracker struct {
-	hourCount    int
-	dayCount     int
-	lastSent     time.Time
-	hourReset    time.Time
-	dayReset     time.Time
+	hourCount int
+	dayCount  int
+	lastSent  time.Time
+	hourReset time.Time
+	dayReset  time.Time
 }
 
 // NewAlertSystem 创建告警系统
@@ -223,7 +223,7 @@ func (a *AlertSystem) checkRateLimit(channelType string) bool {
 	}
 
 	now := time.Now()
-	
+
 	// 重置计数器
 	if now.Hour() != tracker.hourReset.Hour() {
 		tracker.hourCount = 0
@@ -300,15 +300,15 @@ func (a *AlertSystem) broadcastAlert(alert *Alert) error {
 func (a *AlertSystem) sendEmailAlert(channel *AlertChannel, alert *Alert) error {
 	// 简化的邮件发送实现
 	// 在实际环境中，需要集成真实的邮件服务
-	
+
 	template := a.getTemplate("email")
 	subject := a.formatTemplate(template, alert)
-	
+
 	log.Printf("EMAIL ALERT - %s: %s", alert.Level, subject)
-	
+
 	// 这里应该集成真实的邮件服务
 	// 例如: AWS SES, SendGrid, 或其他SMTP服务
-	
+
 	return nil
 }
 
@@ -324,7 +324,7 @@ func (a *AlertSystem) sendFeishuAlert(channel *AlertChannel, alert *Alert) error
 		"msg_type": "text",
 		"content": map[string]interface{}{
 			"text": fmt.Sprintf("🚨 告警通知\n\n级别: %s\n标题: %s\n内容: %s\n时间: %s\n股票: %s",
-				alert.Level, alert.Title, alert.Message, 
+				alert.Level, alert.Title, alert.Message,
 				alert.Timestamp.Format("2006-01-02 15:04:05"), alert.Symbol),
 		},
 	}
@@ -391,14 +391,14 @@ func (a *AlertSystem) getTemplate(name string) string {
 func (a *AlertSystem) formatTemplate(template string, alert *Alert) string {
 	// 简单的模板格式化
 	// 在实际环境中可以使用Go的text/template包
-	
+
 	result := template
 	result = strings.ReplaceAll(result, "{{.Level}}", string(alert.Level))
 	result = strings.ReplaceAll(result, "{{.Title}}", alert.Title)
 	result = strings.ReplaceAll(result, "{{.Message}}", alert.Message)
 	result = strings.ReplaceAll(result, "{{.Symbol}}", alert.Symbol)
 	result = strings.ReplaceAll(result, "{{.Timestamp}}", alert.Timestamp.Format("2006-01-02 15:04:05"))
-	
+
 	return result
 }
 
@@ -519,7 +519,7 @@ func (a *AlertSystem) initDefaultTemplates() {
 {{if .Symbol}}股票: {{.Symbol}}{{end}}
 
 请及时处理相关问题。`,
-		
+
 		"feishu": `🚨 CloudQuantBot 告警
 
 级别: {{.Level}}
@@ -552,9 +552,9 @@ func (a *AlertSystem) initDefaultChannels() {
 			{Field: "level", Operator: "equals", Value: "critical"},
 		},
 		RateLimit: RateLimit{
-			MaxPerHour:  10,
-			MaxPerDay:   100,
-			Cooldown:    5 * time.Minute,
+			MaxPerHour: 10,
+			MaxPerDay:  100,
+			Cooldown:   5 * time.Minute,
 		},
 	}
 
@@ -571,9 +571,9 @@ func (a *AlertSystem) initDefaultChannels() {
 			{Field: "level", Operator: "equals", Value: "critical"},
 		},
 		RateLimit: RateLimit{
-			MaxPerHour:  20,
-			MaxPerDay:   200,
-			Cooldown:    3 * time.Minute,
+			MaxPerHour: 20,
+			MaxPerDay:  200,
+			Cooldown:   3 * time.Minute,
 		},
 	}
 
@@ -592,9 +592,9 @@ func (a *AlertSystem) initDefaultChannels() {
 			{Field: "level", Operator: "equals", Value: "critical"},
 		},
 		RateLimit: RateLimit{
-			MaxPerHour:  5,
-			MaxPerDay:   50,
-			Cooldown:    30 * time.Minute,
+			MaxPerHour: 5,
+			MaxPerDay:  50,
+			Cooldown:   30 * time.Minute,
 		},
 	}
 }

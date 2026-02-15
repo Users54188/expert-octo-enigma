@@ -19,6 +19,18 @@ CloudQuantBot 是一个轻量级的A股量化交易基础系统，支持行情�
 - Python 3.8+ (实盘交易)
 - Docker & Docker Compose (可选)
 
+### 环境变量配置
+CloudQuantBot 使用 `config.yaml` 读取配置，并支持从环境变量注入敏感信息。建议复制 `.env.example` 为 `.env` 后填写：
+
+| 变量 | 说明 | 是否必填 |
+| --- | --- | --- |
+| `DEEPSEEK_API_KEY` | DeepSeek API Key | 启用 AI 分析必填 |
+| `BROKER_USERNAME` / `BROKER_PASSWORD` | 券商账号密码 | 启用实盘交易必填 |
+| `FEISHU_WEBHOOK` | 飞书告警 Webhook | 启用飞书告警必填 |
+| `DINGDING_WEBHOOK` | 钉钉告警 Webhook | 启用钉钉告警必填 |
+| `LOG_LEVEL` | 日志级别（info/debug） | 可选 |
+| `DB_PATH` | 数据库路径（需要在 `config.yaml` 中引用） | 可选 |
+
 ### 本地运行（仅行情和分析功能）
 1. 安装依赖：
    ```bash
@@ -36,6 +48,9 @@ CloudQuantBot 是一个轻量级的A股量化交易基础系统，支持行情�
    DEEPSEEK_API_KEY=your_deepseek_api_key
    BROKER_USERNAME=your_broker_username
    BROKER_PASSWORD=your_broker_password
+   FEISHU_WEBHOOK=your_feishu_webhook
+   DINGDING_WEBHOOK=your_dingding_webhook
+   LOG_LEVEL=info
    ```
 
 2. 启动服务：
@@ -46,6 +61,8 @@ CloudQuantBot 是一个轻量级的A股量化交易基础系统，支持行情�
 - Go API 服务：http://localhost:8080
 - EasyTrader 服务：http://localhost:8888
 
+3. 确认 EasyTrader 容器可以访问券商客户端（本地运行客户端时请挂载对应目录或在宿主机启动）。
+
 ### 启用实盘交易
 
 在使用实盘交易功能前，需要：
@@ -55,6 +72,12 @@ CloudQuantBot 是一个轻量级的A股量化交易基础系统，支持行情�
 3. 配置 `config.yaml` 中的券商信息
 
 **注意：** 实盘交易涉及真实资金，请在充分测试后谨慎使用！
+
+## 部署注意事项
+- **实盘风险**：请在模拟环境充分验证策略，控制仓位与止损阈值。
+- **EasyTrader 依赖**：实盘交易依赖 Python 3.8+ 的 EasyTrader 服务，确保服务能访问券商客户端。
+- **环境变量安全**：不要将 `.env` 或包含密钥的配置文件提交到版本控制。
+- **配置一致性**：修改 `config.yaml` 后需要重启服务以应用最新参数。
 
 ## API 说明
 
@@ -170,6 +193,13 @@ CloudQuantBot 是一个轻量级的A股量化交易基础系统，支持行情�
 
 ### 21. 查看自动交易状态
 - **GET** `/api/trading/auto_trade/status`
+
+## 项目架构概述
+CloudQuantBot 由行情采集、AI/ML 分析、多策略执行、实盘交易、监控告警与回测优化等模块组成，核心数据流如下：
+1. `market` 拉取行情并计算技术指标。
+2. `llm` 与 `ml` 模块生成 AI/ML 分析结果。
+3. `strategies` 组合多策略信号，交由 `trading` 执行。
+4. `monitoring` 负责实时监控与告警，`backtest` 用于策略验证与参数优化。
 
 ## 项目结构
 ```
@@ -289,6 +319,11 @@ go run ./cmd/train_model --symbol=sh600000 --days=500
 ```
 
 训练完成后模型将保存至 `config.yaml` 中的 `ml.model_path`。
+
+## 故障排除
+- **DeepSeek 调用失败**：确认 `DEEPSEEK_API_KEY` 已配置且网络可访问 API 服务。
+- **EasyTrader 连接失败**：检查 `service_url`、券商客户端是否可用，并确保账号密码正确。
+- **数据库报错或锁定**：避免多个实例同时读写同一 SQLite 文件，必要时调整 `database.path`。
 
 ## 免责声明
 

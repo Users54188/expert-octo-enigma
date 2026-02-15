@@ -13,9 +13,9 @@ import (
 // RSIStrategy RSI超买超卖策略
 type RSIStrategy struct {
 	*BaseStrategy
-	period     int      // RSI周期
-	oversold   float64  // 超卖阈值
-	overbought float64  // 超买阈值
+	period     int       // RSI周期
+	oversold   float64   // 超卖阈值
+	overbought float64   // 超买阈值
 	dataSeries []float64 // 价格数据序列
 	gains      []float64 // 上涨幅度
 	losses     []float64 // 下跌幅度
@@ -73,7 +73,7 @@ func (r *RSIStrategy) Init(ctx context.Context, symbol string, config map[string
 		return fmt.Errorf("RSI thresholds must be between 0 and 100")
 	}
 
-	log.Printf("RSI strategy initialized: period=%d, oversold=%.1f, overbought=%.1f", 
+	log.Printf("RSI strategy initialized: period=%d, oversold=%.1f, overbought=%.1f",
 		r.period, r.oversold, r.overbought)
 	return nil
 }
@@ -154,7 +154,7 @@ func (r *RSIStrategy) GenerateSignal(ctx context.Context, marketData *MarketData
 	signal.Metadata["oversold_threshold"] = r.oversold
 	signal.Metadata["overbought_threshold"] = r.overbought
 
-	log.Printf("RSI strategy generated signal: %s %s (RSI: %.2f, strength: %.3f)", 
+	log.Printf("RSI strategy generated signal: %s %s (RSI: %.2f, strength: %.3f)",
 		marketData.Symbol, signalType, rsi, strength)
 
 	return signal, nil
@@ -162,7 +162,7 @@ func (r *RSIStrategy) GenerateSignal(ctx context.Context, marketData *MarketData
 
 // OnTrade 交易回调
 func (r *RSIStrategy) OnTrade(ctx context.Context, trade *trading.TradeRecord) error {
-	log.Printf("RSI strategy trade executed: %s %d shares at %.2f", 
+	log.Printf("RSI strategy trade executed: %s %d shares at %.2f",
 		trade.Symbol, trade.Quantity, trade.Price)
 	return nil
 }

@@ -51,17 +51,17 @@ func CalculateMACD(closes []float64) (float64, float64, float64) {
 	diffSeries := make([]float64, len(closes))
 	ema12Series := calculateEMA(closes, 12)
 	ema26Series := calculateEMA(closes, 26)
-	
+
 	for i := 0; i < len(closes); i++ {
 		diffSeries[i] = ema12Series[i] - ema26Series[i]
 	}
-	
+
 	deaSeries := calculateEMA(diffSeries, 9)
-	
+
 	diff := diffSeries[len(diffSeries)-1]
 	dea := deaSeries[len(deaSeries)-1]
 	macd := 2 * (diff - dea)
-	
+
 	return diff, dea, macd
 }
 
@@ -70,7 +70,7 @@ func calculateEMA(data []float64, period int) []float64 {
 	if len(data) == 0 {
 		return ema
 	}
-	
+
 	k := 2.0 / float64(period+1)
 	ema[0] = data[0]
 	for i := 1; i < len(data); i++ {

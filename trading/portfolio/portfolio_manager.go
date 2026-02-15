@@ -18,87 +18,87 @@ type PortfolioManager struct {
 	mu              sync.RWMutex
 	config          *PortfolioConfig
 	positions       map[string]*PortfolioPosition // 持仓信息
-	strategyWeights map[string]float64          // 策略权重
-	performance     *PortfolioPerformance       // 组合表现
+	strategyWeights map[string]float64            // 策略权重
+	performance     *PortfolioPerformance         // 组合表现
 	positionManager *trading.PositionManager
 	riskManager     *trading.RiskManager
 	createdAt       time.Time
-	lastRebalance    time.Time
+	lastRebalance   time.Time
 }
 
 // PortfolioConfig 组合配置
 type PortfolioConfig struct {
 	RebalanceFrequency time.Duration `yaml:"rebalance_frequency"` // 调仓频率
-	MaxTurnover        float64      `yaml:"max_turnover"`       // 最大换手率
-	MinPositionWeight  float64      `yaml:"min_position_weight"` // 最小持仓权重
-	MaxPositionWeight  float64      `yaml:"max_position_weight"` // 最大持仓权重
-	TargetReturn      float64      `yaml:"target_return"`      // 目标收益率
-	RiskFreeRate      float64      `yaml:"risk_free_rate"`     // 无风险利率
+	MaxTurnover        float64       `yaml:"max_turnover"`        // 最大换手率
+	MinPositionWeight  float64       `yaml:"min_position_weight"` // 最小持仓权重
+	MaxPositionWeight  float64       `yaml:"max_position_weight"` // 最大持仓权重
+	TargetReturn       float64       `yaml:"target_return"`       // 目标收益率
+	RiskFreeRate       float64       `yaml:"risk_free_rate"`      // 无风险利率
 }
 
 // PortfolioPosition 组合持仓
 type PortfolioPosition struct {
-	Symbol       string    `json:"symbol"`
-	Quantity     int64     `json:"quantity"`
-	MarketValue  float64   `json:"market_value"`
-	Weight       float64   `json:"weight"`
-	CostBasis    float64   `json:"cost_basis"`
-	UnrealizedPL float64   `json:"unrealized_pl"`
+	Symbol        string        `json:"symbol"`
+	Quantity      int64         `json:"quantity"`
+	MarketValue   float64       `json:"market_value"`
+	Weight        float64       `json:"weight"`
+	CostBasis     float64       `json:"cost_basis"`
+	UnrealizedPL  float64       `json:"unrealized_pl"`
 	WeightHistory []WeightPoint `json:"weight_history"` // 权重历史
-	LastUpdate   time.Time `json:"last_update"`
+	LastUpdate    time.Time     `json:"last_update"`
 }
 
 // WeightPoint 权重点
 type WeightPoint struct {
 	Timestamp time.Time `json:"timestamp"`
-	Weight    float64  `json:"weight"`
-	Value     float64  `json:"value"`
+	Weight    float64   `json:"weight"`
+	Value     float64   `json:"value"`
 }
 
 // PortfolioPerformance 组合表现
 type PortfolioPerformance struct {
-	TotalValue      float64            `json:"total_value"`
-	TotalReturn     float64            `json:"total_return"`
-	DailyReturn     float64            `json:"daily_return"`
-	WeeklyReturn    float64            `json:"weekly_return"`
-	MonthlyReturn   float64            `json:"monthly_return"`
-	AnnualizedReturn float64           `json:"annualized_return"`
-	MaxDrawdown     float64            `json:"max_drawdown"`
-	SharpeRatio     float64            `json:"sharpe_ratio"`
-	Volatility      float64            `json:"volatility"`
-	WinRate         float64            `json:"win_rate"`
-	ProfitFactor    float64            `json:"profit_factor"`
-	CalmarRatio     float64            `json:"calmar_ratio"`
-	Alpha           float64            `json:"alpha"`
-	Beta            float64            `json:"beta"`
-	ValueAtRisk     float64            `json:"value_at_risk"`
+	TotalValue           float64       `json:"total_value"`
+	TotalReturn          float64       `json:"total_return"`
+	DailyReturn          float64       `json:"daily_return"`
+	WeeklyReturn         float64       `json:"weekly_return"`
+	MonthlyReturn        float64       `json:"monthly_return"`
+	AnnualizedReturn     float64       `json:"annualized_return"`
+	MaxDrawdown          float64       `json:"max_drawdown"`
+	SharpeRatio          float64       `json:"sharpe_ratio"`
+	Volatility           float64       `json:"volatility"`
+	WinRate              float64       `json:"win_rate"`
+	ProfitFactor         float64       `json:"profit_factor"`
+	CalmarRatio          float64       `json:"calmar_ratio"`
+	Alpha                float64       `json:"alpha"`
+	Beta                 float64       `json:"beta"`
+	ValueAtRisk          float64       `json:"value_at_risk"`
 	MaxConsecutiveLosses int           `json:"max_consecutive_losses"`
-	ReturnHistory   []ReturnPoint      `json:"return_history"`
-	BenchmarkReturn float64            `json:"benchmark_return"`
-	ExcessReturn    float64            `json:"excess_return"`
-	InformationRatio float64           `json:"information_ratio"`
-	TrackingError    float64            `json:"tracking_error"`
-	LastUpdate       time.Time          `json:"last_update"`
+	ReturnHistory        []ReturnPoint `json:"return_history"`
+	BenchmarkReturn      float64       `json:"benchmark_return"`
+	ExcessReturn         float64       `json:"excess_return"`
+	InformationRatio     float64       `json:"information_ratio"`
+	TrackingError        float64       `json:"tracking_error"`
+	LastUpdate           time.Time     `json:"last_update"`
 }
 
 // ReturnPoint 收益点
 type ReturnPoint struct {
 	Timestamp time.Time `json:"timestamp"`
-	Value    float64   `json:"value"`
-	Return   float64   `json:"return"`
+	Value     float64   `json:"value"`
+	Return    float64   `json:"return"`
 }
 
 // NewPortfolioManager 创建组合管理器
 func NewPortfolioManager(config PortfolioConfig, positionManager *trading.PositionManager, riskManager *trading.RiskManager) *PortfolioManager {
 	return &PortfolioManager{
 		config:          &config,
-		positions:        make(map[string]*PortfolioPosition),
-		strategyWeights:  make(map[string]float64),
+		positions:       make(map[string]*PortfolioPosition),
+		strategyWeights: make(map[string]float64),
 		performance:     &PortfolioPerformance{},
-		positionManager:  positionManager,
+		positionManager: positionManager,
 		riskManager:     riskManager,
 		createdAt:       time.Now(),
-		lastRebalance:    time.Now(),
+		lastRebalance:   time.Now(),
 	}
 }
 
@@ -107,11 +107,12 @@ func (p *PortfolioManager) UpdatePositions(ctx context.Context) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	// 获取所有持仓
-	positions, err := p.positionManager.GetAllPositions(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get positions: %v", err)
+	if p.positionManager == nil {
+		return fmt.Errorf("position manager not configured")
 	}
+
+	// 获取所有持仓
+	positions := p.positionManager.GetAllPositions()
 
 	// 计算总市值
 	totalValue := 0.0
@@ -128,17 +129,17 @@ func (p *PortfolioManager) UpdatePositions(ctx context.Context) error {
 
 		p.positions[pos.Symbol] = &PortfolioPosition{
 			Symbol:       pos.Symbol,
-			Quantity:     pos.Quantity,
+			Quantity:     int64(pos.Amount),
 			MarketValue:  pos.MarketValue,
 			Weight:       weight,
-			CostBasis:    pos.CostBasis,
-			UnrealizedPL: pos.UnrealizedPL,
+			CostBasis:    pos.CostPrice,
+			UnrealizedPL: pos.UnrealizedPnL,
 			LastUpdate:   time.Now(),
 		}
 
 		// 更新权重历史
 		if existing, exists := p.positions[pos.Symbol]; exists {
-			if len(existing.WeightHistory) == 0 || 
+			if len(existing.WeightHistory) == 0 ||
 				time.Since(existing.WeightHistory[len(existing.WeightHistory)-1].Timestamp) > time.Hour {
 				existing.WeightHistory = append(existing.WeightHistory, WeightPoint{
 					Timestamp: time.Now(),
@@ -327,7 +328,7 @@ func (p *PortfolioManager) calculateTargetPositions(weights map[string]float64) 
 
 		// 这里简化实现：平均分配给该策略推荐的股票
 		// 实际应用中需要根据策略的具体推荐来分配
-		
+
 		// 模拟策略推荐的股票（实际应该从策略管理器获取）
 		strategySymbols := p.getStrategySymbols(strategyName)
 		if len(strategySymbols) == 0 {
@@ -418,17 +419,17 @@ func (p *PortfolioManager) GetPortfolioOverview() *PortfolioOverview {
 	defer p.mu.RUnlock()
 
 	overview := &PortfolioOverview{
-		TotalValue:      p.performance.TotalValue,
-		TotalReturn:     p.performance.TotalReturn,
-		DailyReturn:     p.performance.DailyReturn,
+		TotalValue:       p.performance.TotalValue,
+		TotalReturn:      p.performance.TotalReturn,
+		DailyReturn:      p.performance.DailyReturn,
 		AnnualizedReturn: p.performance.AnnualizedReturn,
-		MaxDrawdown:     p.performance.MaxDrawdown,
-		SharpeRatio:     p.performance.SharpeRatio,
-		PositionCount:   len(p.positions),
-		CashBalance:     0.0, // 简化实现
-		CreatedAt:       p.createdAt,
-		LastRebalance:   p.lastRebalance,
-		NextRebalance:   p.lastRebalance.Add(p.config.RebalanceFrequency),
+		MaxDrawdown:      p.performance.MaxDrawdown,
+		SharpeRatio:      p.performance.SharpeRatio,
+		PositionCount:    len(p.positions),
+		CashBalance:      0.0, // 简化实现
+		CreatedAt:        p.createdAt,
+		LastRebalance:    p.lastRebalance,
+		NextRebalance:    p.lastRebalance.Add(p.config.RebalanceFrequency),
 	}
 
 	// 计算持仓分布
@@ -595,11 +596,11 @@ func (p *PortfolioManager) GetRebalanceRecommendation(ctx context.Context) (*Reb
 	}
 
 	return &RebalanceRecommendation{
-		NeedsRebalancing: needsRebalancing,
-		MaxWeightDrift:   maxDrift,
-		CurrentWeights:   currentWeights,
-		TargetWeights:    targetWeights,
-		WeightDrifts:     drifts,
+		NeedsRebalancing:  needsRebalancing,
+		MaxWeightDrift:    maxDrift,
+		CurrentWeights:    currentWeights,
+		TargetWeights:     targetWeights,
+		WeightDrifts:      drifts,
 		RecommendedAction: p.getRecommendedAction(drifts),
 		EstimatedCost:     p.estimateRebalanceCost(drifts),
 		Timestamp:         time.Now(),
@@ -698,8 +699,8 @@ func (p *PortfolioManager) GetStats() *PortfolioStats {
 	defer p.mu.RUnlock()
 
 	return &PortfolioStats{
-		TotalPositions:    len(p.positions),
-		ActiveStrategies:  len(p.strategyWeights),
+		TotalPositions:   len(p.positions),
+		ActiveStrategies: len(p.strategyWeights),
 		Uptime:           time.Since(p.createdAt),
 		LastUpdate:       p.performance.LastUpdate,
 		LastRebalance:    p.lastRebalance,
@@ -710,39 +711,39 @@ func (p *PortfolioManager) GetStats() *PortfolioStats {
 // RebalanceOrder 调仓订单
 type RebalanceOrder struct {
 	Symbol        string  `json:"symbol"`
-	Action        string  `json:"action"`        // buy, sell
-	TargetValue   float64 `json:"target_value"`  // 目标价值
-	CurrentValue  float64 `json:"current_value"` // 当前价值
-	OrderValue    float64 `json:"order_value"`   // 订单价值
+	Action        string  `json:"action"`         // buy, sell
+	TargetValue   float64 `json:"target_value"`   // 目标价值
+	CurrentValue  float64 `json:"current_value"`  // 当前价值
+	OrderValue    float64 `json:"order_value"`    // 订单价值
 	OrderQuantity int64   `json:"order_quantity"` // 订单数量
-	Priority      int     `json:"priority"`     // 优先级
+	Priority      int     `json:"priority"`       // 优先级
 }
 
 // RebalanceRecommendation 调仓建议
 type RebalanceRecommendation struct {
-	NeedsRebalancing bool              `json:"needs_rebalancing"`
-	MaxWeightDrift   float64           `json:"max_weight_drift"`
-	CurrentWeights   map[string]float64 `json:"current_weights"`
-	TargetWeights    map[string]float64 `json:"target_weights"`
-	WeightDrifts     map[string]float64 `json:"weight_drifts"`
-	RecommendedAction string            `json:"recommended_action"`
-	EstimatedCost    float64           `json:"estimated_cost"`
-	Timestamp        time.Time         `json:"timestamp"`
+	NeedsRebalancing  bool               `json:"needs_rebalancing"`
+	MaxWeightDrift    float64            `json:"max_weight_drift"`
+	CurrentWeights    map[string]float64 `json:"current_weights"`
+	TargetWeights     map[string]float64 `json:"target_weights"`
+	WeightDrifts      map[string]float64 `json:"weight_drifts"`
+	RecommendedAction string             `json:"recommended_action"`
+	EstimatedCost     float64            `json:"estimated_cost"`
+	Timestamp         time.Time          `json:"timestamp"`
 }
 
 // PortfolioOverview 组合概览
 type PortfolioOverview struct {
-	TotalValue          float64            `json:"total_value"`
-	TotalReturn         float64            `json:"total_return"`
-	DailyReturn         float64            `json:"daily_return"`
-	AnnualizedReturn    float64            `json:"annualized_return"`
-	MaxDrawdown         float64            `json:"max_drawdown"`
-	SharpeRatio         float64            `json:"sharpe_ratio"`
-	PositionCount       int                `json:"position_count"`
-	CashBalance         float64            `json:"cash_balance"`
-	CreatedAt           time.Time          `json:"created_at"`
-	LastRebalance       time.Time          `json:"last_rebalance"`
-	NextRebalance       time.Time          `json:"next_rebalance"`
+	TotalValue           float64            `json:"total_value"`
+	TotalReturn          float64            `json:"total_return"`
+	DailyReturn          float64            `json:"daily_return"`
+	AnnualizedReturn     float64            `json:"annualized_return"`
+	MaxDrawdown          float64            `json:"max_drawdown"`
+	SharpeRatio          float64            `json:"sharpe_ratio"`
+	PositionCount        int                `json:"position_count"`
+	CashBalance          float64            `json:"cash_balance"`
+	CreatedAt            time.Time          `json:"created_at"`
+	LastRebalance        time.Time          `json:"last_rebalance"`
+	NextRebalance        time.Time          `json:"next_rebalance"`
 	PositionDistribution map[string]float64 `json:"position_distribution"`
 	IndustryDistribution map[string]float64 `json:"industry_distribution"`
 }
@@ -751,8 +752,8 @@ type PortfolioOverview struct {
 type PortfolioStats struct {
 	TotalPositions   int           `json:"total_positions"`
 	ActiveStrategies int           `json:"active_strategies"`
-	Uptime          time.Duration `json:"uptime"`
-	LastUpdate      time.Time     `json:"last_update"`
-	LastRebalance   time.Time     `json:"last_rebalance"`
-	ShouldRebalance bool          `json:"should_rebalance"`
+	Uptime           time.Duration `json:"uptime"`
+	LastUpdate       time.Time     `json:"last_update"`
+	LastRebalance    time.Time     `json:"last_rebalance"`
+	ShouldRebalance  bool          `json:"should_rebalance"`
 }

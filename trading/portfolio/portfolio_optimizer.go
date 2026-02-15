@@ -14,46 +14,46 @@ type PortfolioOptimizer struct {
 
 // OptimizerConfig 优化器配置
 type OptimizerConfig struct {
-	Method           string  `yaml:"method"`            // 优化方法: equal_weight, risk_parity, max_sharpe
-	RiskFreeRate     float64 `yaml:"risk_free_rate"`     // 无风险利率
-	LookbackPeriod  int     `yaml:"lookback_period"`   // 回看期数
-	MinWeight       float64 `yaml:"min_weight"`        // 最小权重
-	MaxWeight       float64 `yaml:"max_weight"`        // 最大权重
-	RebalancePeriod int     `yaml:"rebalance_period"`   // 调仓周期
+	Method          string  `yaml:"method"`           // 优化方法: equal_weight, risk_parity, max_sharpe
+	RiskFreeRate    float64 `yaml:"risk_free_rate"`   // 无风险利率
+	LookbackPeriod  int     `yaml:"lookback_period"`  // 回看期数
+	MinWeight       float64 `yaml:"min_weight"`       // 最小权重
+	MaxWeight       float64 `yaml:"max_weight"`       // 最大权重
+	RebalancePeriod int     `yaml:"rebalance_period"` // 调仓周期
 }
 
 // OptimizationResult 优化结果
 type OptimizationResult struct {
-	Weights     map[string]float64 `json:"weights"`      // 权重分配
-	Method      string            `json:"method"`       // 优化方法
-	SharpeRatio float64          `json:"sharpe_ratio"` // 夏普比率
-	Return      float64          `json:"return"`       // 预期收益
-	Risk        float64          `json:"risk"`         // 风险（标准差）
-	MaxDrawdown float64          `json:"max_drawdown"` // 最大回撤
-	Alpha       float64          `json:"alpha"`        // 阿尔法
-	Beta        float64          `json:"beta"`         // 贝塔
-	InfoRatio   float64          `json:"info_ratio"`   // 信息比率
-	TrackingError float64        `json:"tracking_error"` // 跟踪误差
-	ExecutionTime time.Duration  `json:"execution_time"` // 执行时间
-	Timestamp   time.Time        `json:"timestamp"`
-	Notes       string           `json:"notes"`
+	Weights       map[string]float64 `json:"weights"`        // 权重分配
+	Method        string             `json:"method"`         // 优化方法
+	SharpeRatio   float64            `json:"sharpe_ratio"`   // 夏普比率
+	Return        float64            `json:"return"`         // 预期收益
+	Risk          float64            `json:"risk"`           // 风险（标准差）
+	MaxDrawdown   float64            `json:"max_drawdown"`   // 最大回撤
+	Alpha         float64            `json:"alpha"`          // 阿尔法
+	Beta          float64            `json:"beta"`           // 贝塔
+	InfoRatio     float64            `json:"info_ratio"`     // 信息比率
+	TrackingError float64            `json:"tracking_error"` // 跟踪误差
+	ExecutionTime time.Duration      `json:"execution_time"` // 执行时间
+	Timestamp     time.Time          `json:"timestamp"`
+	Notes         string             `json:"notes"`
 }
 
 // AssetData 资产数据
 type AssetData struct {
-	Symbol      string    `json:"symbol"`
-	Returns     []float64 `json:"returns"`      // 收益率序列
-	MeanReturn float64   `json:"mean_return"`  // 平均收益率
-	Volatility float64   `json:"volatility"`   // 波动率
-	MinReturn  float64   `json:"min_return"`   // 最小收益率
-	MaxReturn  float64   `json:"max_return"`   // 最大收益率
+	Symbol     string    `json:"symbol"`
+	Returns    []float64 `json:"returns"`     // 收益率序列
+	MeanReturn float64   `json:"mean_return"` // 平均收益率
+	Volatility float64   `json:"volatility"`  // 波动率
+	MinReturn  float64   `json:"min_return"`  // 最小收益率
+	MaxReturn  float64   `json:"max_return"`  // 最大收益率
 }
 
 // CorrelationMatrix 相关性矩阵
 type CorrelationMatrix struct {
-	Assets     []string              `json:"assets"`     // 资产列表
-	Covariance [][]float64           `json:"covariance"` // 协方差矩阵
-	Correlation [][]float64          `json:"correlation"` // 相关性矩阵
+	Assets      []string    `json:"assets"`      // 资产列表
+	Covariance  [][]float64 `json:"covariance"`  // 协方差矩阵
+	Correlation [][]float64 `json:"correlation"` // 相关性矩阵
 }
 
 // NewPortfolioOptimizer 创建组合优化器
@@ -98,22 +98,22 @@ func (p *PortfolioOptimizer) Optimize(symbols []string, historicalData map[strin
 	}
 
 	result := &OptimizationResult{
-		Weights:      weights,
-		Method:       p.config.Method,
-		SharpeRatio:  metrics.SharpeRatio,
-		Return:       metrics.ExpectedReturn,
-		Risk:         metrics.Risk,
-		MaxDrawdown:  metrics.MaxDrawdown,
-		Alpha:        metrics.Alpha,
-		Beta:         metrics.Beta,
-		InfoRatio:    metrics.InfoRatio,
+		Weights:       weights,
+		Method:        p.config.Method,
+		SharpeRatio:   metrics.SharpeRatio,
+		Return:        metrics.ExpectedReturn,
+		Risk:          metrics.Risk,
+		MaxDrawdown:   metrics.MaxDrawdown,
+		Alpha:         metrics.Alpha,
+		Beta:          metrics.Beta,
+		InfoRatio:     metrics.InfoRatio,
 		TrackingError: metrics.TrackingError,
 		ExecutionTime: time.Since(startTime),
-		Timestamp:    startTime,
-		Notes:        p.generateOptimizationNotes(metrics),
+		Timestamp:     startTime,
+		Notes:         p.generateOptimizationNotes(metrics),
 	}
 
-	log.Printf("Portfolio optimization completed: method=%s, sharpe_ratio=%.3f, execution_time=%v", 
+	log.Printf("Portfolio optimization completed: method=%s, sharpe_ratio=%.3f, execution_time=%v",
 		p.config.Method, result.SharpeRatio, result.ExecutionTime)
 
 	return result, nil
@@ -152,7 +152,7 @@ func (p *PortfolioOptimizer) calculateAssetData(symbols []string, historicalData
 
 	for i, symbol := range symbols {
 		returns := historicalData[symbol]
-		
+
 		// 计算统计量
 		meanReturn := p.calculateMean(returns)
 		volatility := p.calculateVolatility(returns)
@@ -160,12 +160,12 @@ func (p *PortfolioOptimizer) calculateAssetData(symbols []string, historicalData
 		maxReturn := p.calculateMax(returns)
 
 		assetData[i] = &AssetData{
-			Symbol:      symbol,
-			Returns:     returns,
-			MeanReturn:  meanReturn,
-			Volatility:  volatility,
-			MinReturn:   minReturn,
-			MaxReturn:   maxReturn,
+			Symbol:     symbol,
+			Returns:    returns,
+			MeanReturn: meanReturn,
+			Volatility: volatility,
+			MinReturn:  minReturn,
+			MaxReturn:  maxReturn,
 		}
 	}
 
@@ -230,7 +230,7 @@ func (p *PortfolioOptimizer) riskParityOptimization(assetData []*AssetData) (map
 func (p *PortfolioOptimizer) maxSharpeOptimization(assetData []*AssetData) (map[string]float64, OptimizationMetrics) {
 	// 简化的最大夏普比率优化
 	// 实际应该使用二次规划求解
-	
+
 	n := len(assetData)
 	weights := make(map[string]float64)
 
@@ -355,14 +355,14 @@ func (p *PortfolioOptimizer) calculatePortfolioMetrics(weights map[string]float6
 	}
 
 	return OptimizationMetrics{
-		ExpectedReturn: expectedReturn * 252, // 年化
-		Risk:           risk * math.Sqrt(252), // 年化
-		SharpeRatio:   sharpeRatio * math.Sqrt(252), // 年化
-		MaxDrawdown:   p.estimateMaxDrawdown(weights, assetData),
-		Alpha:         0.0, // 简化实现
-		Beta:          1.0, // 简化实现
-		InfoRatio:     0.0, // 简化实现
-		TrackingError: risk, // 简化实现
+		ExpectedReturn: expectedReturn * 252,         // 年化
+		Risk:           risk * math.Sqrt(252),        // 年化
+		SharpeRatio:    sharpeRatio * math.Sqrt(252), // 年化
+		MaxDrawdown:    p.estimateMaxDrawdown(weights, assetData),
+		Alpha:          0.0,  // 简化实现
+		Beta:           1.0,  // 简化实现
+		InfoRatio:      0.0,  // 简化实现
+		TrackingError:  risk, // 简化实现
 	}
 }
 
@@ -374,7 +374,7 @@ func (p *PortfolioOptimizer) estimateMaxDrawdown(weights map[string]float64, ass
 
 	for symbol, weight := range weights {
 		totalWeight += weight
-		
+
 		// 查找资产的历史最大回撤
 		var assetMaxDD float64
 		if assetData != nil {
@@ -405,7 +405,7 @@ func (p *PortfolioOptimizer) estimateAssetMaxDrawdown(returns []float64) float64
 
 	for _, ret := range returns {
 		cumulative *= (1 + ret)
-		
+
 		if cumulative > peak {
 			peak = cumulative
 		}
@@ -482,7 +482,7 @@ func (p *PortfolioOptimizer) calculateMax(values []float64) float64 {
 
 // generateOptimizationNotes 生成优化说明
 func (p *PortfolioOptimizer) generateOptimizationNotes(metrics OptimizationMetrics) string {
-	return fmt.Sprintf("优化完成，采用 %s 方法，预期年化收益 %.2f%%，年化风险 %.2f%%，夏普比率 %.3f", 
+	return fmt.Sprintf("优化完成，采用 %s 方法，预期年化收益 %.2f%%，年化风险 %.2f%%，夏普比率 %.3f",
 		p.config.Method, metrics.ExpectedReturn*100, metrics.Risk*100, metrics.SharpeRatio)
 }
 
@@ -545,13 +545,13 @@ func (p *PortfolioOptimizer) OptimizeWithConstraints(symbols []string, historica
 				}
 			}
 		}
-		
+
 		// 重新归一化
 		var totalWeight float64
 		for _, weight := range result.Weights {
 			totalWeight += weight
 		}
-		
+
 		if totalWeight > 0 {
 			for symbol := range result.Weights {
 				result.Weights[symbol] /= totalWeight
@@ -577,7 +577,7 @@ func (p *PortfolioOptimizer) GetConfig() OptimizerConfig {
 type OptimizationMetrics struct {
 	ExpectedReturn float64 `json:"expected_return"`
 	Risk           float64 `json:"risk"`
-	SharpeRatio   float64 `json:"sharpe_ratio"`
+	SharpeRatio    float64 `json:"sharpe_ratio"`
 	MaxDrawdown    float64 `json:"max_drawdown"`
 	Alpha          float64 `json:"alpha"`
 	Beta           float64 `json:"beta"`

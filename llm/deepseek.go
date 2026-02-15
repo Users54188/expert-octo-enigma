@@ -43,16 +43,6 @@ func NewDeepSeekAnalyzer(apiKey, model string, timeout time.Duration, maxTokens 
 }
 
 func (d *DeepSeekAnalyzer) Analyze(ctx context.Context, kline market.KLine, indicator market.Indicator) (*AnalysisResult, error) {
-	if d == nil || d.client == nil {
-		return nil, errors.New("deepseek analyzer not configured")
-	}
-	if d.apiKey == "" {
-		return nil, errors.New("deepseek api key is required")
-	}
-	if d.model == "" {
-		d.model = "deepseek-chat"
-	}
-
 	prompt := fmt.Sprintf(`你是一个A股量化交易分析师。基于以下数据分析市场：
 
 股票代码: %s
@@ -79,55 +69,73 @@ func (d *DeepSeekAnalyzer) Analyze(ctx context.Context, kline market.KLine, indi
 }
 `, kline.Symbol, kline.Close, kline.Volume, indicator.MA5, indicator.MA20, indicator.RSI, indicator.MACD)
 
-	requestBody := deepSeekRequest{
-		Model: d.model,
-		Messages: []deepSeekMessage{{
-			Role:    "user",
-			Content: prompt,
-		}},
-		MaxTokens:  d.maxTokens,
-		Temperature: 0.2,
-	}
-	payload, err := json.Marshal(requestBody)
+	content, err := d.AnalyzePrompt(ctx, prompt)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, d.baseURL, bytes.NewReader(payload))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.apiKey))
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := d.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		var apiErr deepSeekErrorResponse
-		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err == nil && apiErr.Error.Message != "" {
-			return nil, fmt.Errorf("deepseek api error: %s", apiErr.Error.Message)
-		}
-		return nil, fmt.Errorf("deepseek api returned status %d", resp.StatusCode)
-	}
-
-	var apiResp deepSeekResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
-		return nil, err
-	}
-	if len(apiResp.Choices) == 0 {
-		return nil, errors.New("deepseek api returned empty response")
-	}
-	content := apiResp.Choices[0].Message.Content
 	result, err := parseAnalysisResult(content)
 	if err != nil {
 		return nil, err
 	}
 	result.Symbol = kline.Symbol
 	return result, nil
+}
+
+func (d *DeepSeekAnalyzer) AnalyzePrompt(ctx context.Context, prompt string) (string, error) {
+	if d == nil || d.client == nil {
+		return "", errors.New("deepseek analyzer not configured")
+	}
+	if d.apiKey == "" {
+		return "", errors.New("deepseek api key is required")
+	}
+	if d.model == "" {
+		d.model = "deepseek-chat"
+	}
+
+	requestBody := deepSeekRequest{
+		Model: d.model,
+		Messages: []deepSeekMessage{{
+			Role:    "user",
+			Content: prompt,
+		}},
+		MaxTokens:   d.maxTokens,
+		Temperature: 0.2,
+	}
+	payload, err := json.Marshal(requestBody)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, d.baseURL, bytes.NewReader(payload))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.apiKey))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := d.client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		var apiErr deepSeekErrorResponse
+		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err == nil && apiErr.Error.Message != "" {
+			return "", fmt.Errorf("deepseek api error: %s", apiErr.Error.Message)
+		}
+		return "", fmt.Errorf("deepseek api returned status %d", resp.StatusCode)
+	}
+
+	var apiResp deepSeekResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+		return "", err
+	}
+	if len(apiResp.Choices) == 0 {
+		return "", errors.New("deepseek api returned empty response")
+	}
+	return cleanDeepSeekContent(apiResp.Choices[0].Message.Content), nil
 }
 
 type deepSeekMessage struct {
@@ -154,12 +162,16 @@ type deepSeekErrorResponse struct {
 	} `json:"error"`
 }
 
-func parseAnalysisResult(content string) (*AnalysisResult, error) {
+func cleanDeepSeekContent(content string) string {
 	trimmed := strings.TrimSpace(content)
 	trimmed = strings.TrimPrefix(trimmed, "```json")
 	trimmed = strings.TrimPrefix(trimmed, "```")
 	trimmed = strings.TrimSuffix(trimmed, "```")
-	trimmed = strings.TrimSpace(trimmed)
+	return strings.TrimSpace(trimmed)
+}
+
+func parseAnalysisResult(content string) (*AnalysisResult, error) {
+	trimmed := cleanDeepSeekContent(content)
 
 	var result AnalysisResult
 	if err := json.Unmarshal([]byte(trimmed), &result); err != nil {

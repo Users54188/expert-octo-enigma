@@ -24,11 +24,11 @@ type AIStrategy struct {
 
 // AIAnalysisResult AI分析结果
 type AIAnalysisResult struct {
-	Signal     string  `json:"signal"`     // buy, sell, hold
-	Confidence float64 `json:"confidence"` // 置信度 0-1
-	Reason     string  `json:"reason"`    // 分析原因
-	Score      float64 `json:"score"`     // 综合评分
-	RiskLevel  string  `json:"risk_level"` // 风险等级: low, medium, high
+	Signal     string    `json:"signal"`     // buy, sell, hold
+	Confidence float64   `json:"confidence"` // 置信度 0-1
+	Reason     string    `json:"reason"`     // 分析原因
+	Score      float64   `json:"score"`      // 综合评分
+	RiskLevel  string    `json:"risk_level"` // 风险等级: low, medium, high
 	Timestamp  time.Time `json:"timestamp"`
 }
 
@@ -44,11 +44,11 @@ func NewAIStrategy() Strategy {
 
 	// 设置默认参数
 	strategy.parameters = map[string]interface{}{
-		"threshold":     0.7,
-		"confidence":    0.6,
+		"threshold":         0.7,
+		"confidence":        0.6,
 		"analysis_interval": "1h", // 分析间隔
-		"market_context": true,    // 是否包含市场上下文
-		"risk_analysis":  true,    // 是否包含风险分析
+		"market_context":    true, // 是否包含市场上下文
+		"risk_analysis":     true, // 是否包含风险分析
 	}
 
 	return strategy
@@ -159,7 +159,7 @@ func (a *AIStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 
 	signal = NewSignal(marketData.Symbol, signalType, strength, marketData.Close)
 	signal.TargetPrice = a.calculateTargetPrice(marketData.Close, signalType, 0.05) // 5%目标收益
-	signal.StopLoss = a.calculateStopLoss(marketData.Close, signalType, 0.03)   // 3%止损
+	signal.StopLoss = a.calculateStopLoss(marketData.Close, signalType, 0.03)       // 3%止损
 	signal.Reason = reason
 
 	// 添加AI分析信息到元数据
@@ -168,7 +168,7 @@ func (a *AIStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 	signal.Metadata["ai_score"] = a.analysisResult.Score
 	signal.Metadata["ai_reason"] = a.analysisResult.Reason
 
-	log.Printf("AI strategy generated signal: %s %s (confidence: %.3f, risk: %s)", 
+	log.Printf("AI strategy generated signal: %s %s (confidence: %.3f, risk: %s)",
 		marketData.Symbol, signalType, a.analysisResult.Confidence, a.analysisResult.RiskLevel)
 
 	return signal, nil
@@ -184,7 +184,7 @@ func (a *AIStrategy) performAIAnalysis(ctx context.Context, marketData *MarketDa
 	prompt := a.buildAnalysisPrompt(marketData)
 
 	// 调用DeepSeek分析
-	response, err := a.llmAnalyzer.Analyze(ctx, prompt)
+	response, err := a.llmAnalyzer.AnalyzePrompt(ctx, prompt)
 	if err != nil {
 		return nil, fmt.Errorf("DeepSeek analysis failed: %v", err)
 	}
@@ -329,7 +329,7 @@ func (a *AIStrategy) generateSimpleSignal(marketData *MarketData) (*Signal, erro
 
 // OnTrade 交易回调
 func (a *AIStrategy) OnTrade(ctx context.Context, trade *trading.TradeRecord) error {
-	log.Printf("AI strategy trade executed: %s %d shares at %.2f", 
+	log.Printf("AI strategy trade executed: %s %d shares at %.2f",
 		trade.Symbol, trade.Quantity, trade.Price)
 	return nil
 }
