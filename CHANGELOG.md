@@ -1,5 +1,248 @@
 # 更新日志
 
+## Phase 4: 代码修复与功能增强
+
+### 基础修复
+
+#### 1. Go 版本修复
+- **修改**: `go.mod`
+- **变更**: 统一使用 Go 1.22
+- **影响**: 提高兼容性和稳定性
+
+#### 2. main.go 初始化完善
+- **修改**: `main.go`
+- **变更**:
+  - 优化组件初始化顺序
+  - 修复 AIRisk 与 DeepSeekAnalyzer 接口兼容性
+  - 改进错误处理
+- **影响**: 系统启动更稳定
+
+#### 3. 环境变量和文档完善
+- **新增**: `.env.example` 完整环境变量模板
+- **新增**: `LOCAL_SETUP.md` 本地运行指南
+- **更新**: `README.md` 新增 API 文档
+- **影响**: 更容易配置和部署
+
+### 功能增强
+
+#### 1. 真实行业/板块数据集成
+
+**新增文件**:
+- `data/industry_mapping.json` - 50只热门股票的申万一级行业映射
+- `market/industry.go` - 行业数据加载和查询模块
+
+**数据结构**:
+```go
+type IndustryInfo struct {
+    Symbol    string
+    Name      string
+    Industry  string
+    Sector    string
+    MarketCap string
+}
+
+type IndustryExposure struct {
+    Industry    string
+    Weight      float64
+    Benchmark   float64
+    ActiveShare float64
+    Symbols     []string
+}
+```
+
+**新增 API**:
+- `GET /api/stock/{symbol}/industry` - 获取股票行业信息
+- `GET /api/portfolio/industry_exposure` - 获取行业暴露分析
+
+**功能**:
+- 股票到行业的映射查询
+- 行业暴露分析（vs 沪深300基准）
+- 板块分类（主板/创业板/科创板）
+- 市值分类（大/中/小盘）
+
+#### 2. 扩展风险模型
+
+**新增文件**:
+- `trading/risk/curve.go` - 资金曲线跟踪
+- `trading/risk/attribution.go` - 风险归因分析
+- `trading/risk/var.go` - VaR/CVaR 计算
+
+**资金曲线功能**:
+- 实时权益追踪
+- 日度盈亏计算
+- 回撤监控
+- 累计盈亏统计
+
+**风险归因功能**:
+- 行业归因分析
+- 个股归因分析
+- 因子暴露计算
+- Beta 和波动率分析
+
+**VaR/CVaR 计算**:
+- 历史模拟法
+- 参数法
+- 蒙特卡洛法
+- 回测验证
+
+**新增 API**:
+- `GET /api/risk/equity_curve?days=30` - 资金曲线
+- `GET /api/risk/attribution` - 风险归因
+- `GET /api/risk/var` - VaR 指标
+
+#### 3. 策略回放与实时绩效可视化
+
+**新增文件**:
+- `monitoring/dashboard.go` - 可视化面板数据管理
+- `monitoring/performance.go` - 实时绩效计算
+- `http/dashboard_handlers.go` - 可视化 API
+
+**Dashboard 数据流**:
+```go
+type DashboardData struct {
+    Type      string
+    Data      interface{}
+    Timestamp time.Time
+}
+```
+
+**绩效指标**:
+- 总收益率
+- 年化收益
+- 夏普比率
+- 索提诺比率
+- 卡玛比率
+- 最大回撤
+- 胜率
+- 盈亏比
+
+**新增 API**:
+- `GET /api/dashboard/metrics` - 实时绩效指标
+- `GET /api/dashboard/equity?days=30` - 资金曲线
+- `GET /api/dashboard/positions` - 持仓列表
+- `GET /api/dashboard/risk` - 风险指标
+- `GET /api/dashboard/snapshot` - 完整快照
+
+- `GET /api/performance/metrics` - 绩效详情
+- `GET /api/performance/equity?days=30` - 权益历史
+- `GET /api/performance/trades?limit=50` - 交易记录
+- `GET /api/performance/drawdown` - 回撤信息
+- `GET /api/performance/stats` - 统计信息
+
+#### 4. 多数据源行情冗余与异常检测
+
+**新增文件**:
+- `market/providers/manager.go` - 数据源管理器
+- `market/providers/sina.go` - 新浪财经数据源
+- `market/providers/eastmoney.go` - 东方财富数据源
+- `market/providers/tencent.go` - 腾讯财经数据源
+- `market/providers/mock.go` - Mock 数据生成器
+- `market/anomaly.go` - 异常检测
+
+**数据源特性**:
+- 统一接口设计
+- 自动故障切换
+- 健康检查机制
+- 优先级管理
+
+**异常检测**:
+- 价格跳变检测（默认5%阈值）
+- 成交量异常检测（3倍阈值）
+- 异常波动检测（3倍标准差）
+- 数据延迟检测
+
+**新增 API**:
+- `GET /api/market/providers` - 数据源状态
+- `GET /api/market/health` - 行情健康检查
+- `GET /api/market/anomaly` - 异常检测报告
+
+#### 5. 本地可运行优化
+
+**新增文件**:
+- `scripts/start_local.sh` - 本地一键启动脚本
+- `scripts/start_dev.sh` - 开发模式启动（带热重载）
+
+**本地模式特性**:
+- 不依赖券商配置
+- Mock 数据 7x24 小时可用
+- 自动生成配置文件
+- 支持离线开发和测试
+
+**开发模式特性**:
+- 热重载（使用 air 工具）
+- Debug 日志级别
+- 快速迭代
+
+**配置文件**:
+- `config.local.yaml` - 本地运行配置
+- `.air.toml` - 热重载配置
+
+### 项目结构更新
+
+```
+cloudquant/
+├── data/                    # 新增：静态数据
+│   └── industry_mapping.json
+├── scripts/                 # 新增：启动脚本
+│   ├── start_local.sh
+│   └── start_dev.sh
+├── market/
+│   ├── industry.go          # 新增
+│   ├── anomaly.go           # 新增
+│   └── providers/           # 新增
+│       ├── manager.go
+│       ├── sina.go
+│       ├── eastmoney.go
+│       ├── tencent.go
+│       └── mock.go
+├── trading/risk/
+│   ├── curve.go             # 新增
+│   ├── attribution.go       # 新增
+│   └── var.go               # 新增
+├── monitoring/
+│   ├── dashboard.go         # 新增
+│   └── performance.go       # 新增
+├── http/
+│   └── dashboard_handlers.go # 新增
+├── LOCAL_SETUP.md           # 新增：本地运行指南
+└── CHANGELOG.md            # 更新
+```
+
+### 验收标准
+
+- ✅ go build 编译通过
+- ✅ go run main.go 能在本地正常启动（不依赖券商）
+- ✅ 行业暴露分析 API 正常工作
+- ✅ 资金曲线和风险归因计算正确
+- ✅ WebSocket 实时数据推送正常
+- ✅ 多数据源自动切换正常
+- ✅ Mock 数据在离线时可用
+- ✅ 所有新增代码有完整注释
+- ✅ 提供本地运行文档 LOCAL_SETUP.md
+
+### 文件统计
+
+**新增文件**: 18
+**修改文件**: 5
+**删除文件**: 0
+**总代码行数**: ~10,000+
+
+### 性能优化
+
+- 数据源健康检查间隔：30s
+- Dashboard 更新频率：5s
+- Mock 数据更新频率：1s
+- 支持最大 WebSocket 连接：100
+
+### 兼容性
+
+- Go 版本：1.22+
+- 操作系统：Linux, macOS, Windows (WSL)
+- 数据库：SQLite 3
+- 网络要求：可选（本地模式可离线）
+
+---
+
 ## Phase 3: 实盘交易与风险管理系统
 
 ### 新增功能

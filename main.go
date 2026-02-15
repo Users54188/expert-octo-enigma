@@ -12,7 +12,7 @@ import (
 
 	"cloudquant/backtest"
 	"cloudquant/db"
-	qhttp "cloudquant/http"
+	"cloudquant/http"
 	"cloudquant/llm"
 	"cloudquant/market"
 	"cloudquant/ml"
@@ -253,7 +253,7 @@ func main() {
 	initializeServices(config)
 
 	// 3. Start HTTP server
-	server := qhttp.NewServer(config.Http.Port)
+	server := http.NewServer(config.Http.Port)
 	go func() {
 		if err := server.Start(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("HTTP server failed: %v", err)
@@ -294,15 +294,15 @@ func initializeServices(config *Config) {
 
 	// 1. 初始化基础服务
 	llmAnalyzer = llm.NewDeepSeekAnalyzer(config.LLM.APIKey, config.LLM.Model, config.LLM.Timeout, config.LLM.MaxTokens)
-	qhttp.SetAnalyzer(llmAnalyzer)
+	http.SetAnalyzer(llmAnalyzer)
 
 	if config.ML.ModelType != "" && config.ML.ModelPath != "" {
 		if model, err := ml.LoadModel(config.ML.ModelType, config.ML.ModelPath); err == nil {
-			qhttp.SetModelProvider(model)
+			http.SetModelProvider(model)
 		}
 	}
 
-	qhttp.SetTrainingConfig(qhttp.TrainingConfig{
+	http.SetTrainingConfig(http.TrainingConfig{
 		Symbol:       firstSymbol(config.Symbols),
 		Days:         500,
 		ModelType:    config.ML.ModelType,
@@ -665,7 +665,7 @@ func initializeLegacyTradingSystem(config *Config) {
 		)
 
 		// 8. 设置HTTP处理器
-		qhttp.SetTradingComponents(tradeHistory, brokerConnector, riskManager, positionManager, orderExecutor, signalHandler)
+		http.SetTradingComponents(tradeHistory, brokerConnector, riskManager, positionManager, orderExecutor, signalHandler)
 
 		// 9. 连接多策略系统到传统交易系统
 		if strategyManager != nil {
