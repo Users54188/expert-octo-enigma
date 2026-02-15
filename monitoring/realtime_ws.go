@@ -16,12 +16,12 @@ import (
 type MessageType string
 
 const (
-	MarketData    MessageType = "market_data"
+	MarketData     MessageType = "market_data"
 	StrategySignal MessageType = "strategy_signal"
-	TradeEvent    MessageType = "trade_event"
-	RiskAlert     MessageType = "risk_alert"
-	SystemStatus  MessageType = "system_status"
-	Heartbeat     MessageType = "heartbeat"
+	TradeEvent     MessageType = "trade_event"
+	RiskAlert      MessageType = "risk_alert"
+	SystemStatus   MessageType = "system_status"
+	Heartbeat      MessageType = "heartbeat"
 )
 
 // Message 监控消息结构
@@ -34,22 +34,22 @@ type Message struct {
 
 // Client WebSocket客户端
 type Client struct {
-	conn         *websocket.Conn
-	send         chan []byte
-	clientID     string
+	conn          *websocket.Conn
+	send          chan []byte
+	clientID      string
 	subscriptions map[string]bool // 订阅的消息类型
 }
 
 // WebSocketHub WebSocket中心
 type WebSocketHub struct {
-	clients     map[*Client]bool
-	broadcast   chan []byte
-	register    chan *Client
-	unregister  chan *Client
-	mu          sync.RWMutex
-	upgrader    websocket.Upgrader
-	ctx         context.Context
-	cancel      context.CancelFunc
+	clients    map[*Client]bool
+	broadcast  chan []byte
+	register   chan *Client
+	unregister chan *Client
+	mu         sync.RWMutex
+	upgrader   websocket.Upgrader
+	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
 // RealtimeMonitor 实时监控器
@@ -65,12 +65,12 @@ type RealtimeMonitor struct {
 
 // MonitorStats 监控统计
 type MonitorStats struct {
-	ConnectedClients    int64         `json:"connected_clients"`
-	MessagesSent       int64         `json:"messages_sent"`
-	MessagesReceived   int64         `json:"messages_received"`
-	StartTime          time.Time     `json:"start_time"`
-	LastMessageTime    time.Time     `json:"last_message_time"`
-	Uptime             time.Duration `json:"uptime"`
+	ConnectedClients int64         `json:"connected_clients"`
+	MessagesSent     int64         `json:"messages_sent"`
+	MessagesReceived int64         `json:"messages_received"`
+	StartTime        time.Time     `json:"start_time"`
+	LastMessageTime  time.Time     `json:"last_message_time"`
+	Uptime           time.Duration `json:"uptime"`
 }
 
 // NewWebSocketHub 创建WebSocket中心
@@ -78,9 +78,9 @@ func NewWebSocketHub() *WebSocketHub {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &WebSocketHub{
-		clients:   make(map[*Client]bool),
-		broadcast: make(chan []byte, 256),
-		register:  make(chan *Client),
+		clients:    make(map[*Client]bool),
+		broadcast:  make(chan []byte, 256),
+		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -275,9 +275,9 @@ func NewRealtimeMonitor() *RealtimeMonitor {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	monitor := &RealtimeMonitor{
-		hub:     NewWebSocketHub(),
-		ctx:     ctx,
-		cancel:  cancel,
+		hub:    NewWebSocketHub(),
+		ctx:    ctx,
+		cancel: cancel,
 		stats: &MonitorStats{
 			StartTime: time.Now(),
 		},
@@ -545,22 +545,22 @@ func (m *RealtimeMonitor) SetAlertSystem(alertSystem *AlertSystem) {
 
 // MarketDataMessage 市场数据消息
 type MarketDataMessage struct {
-	Symbol         string    `json:"symbol"`
-	Open           float64   `json:"open"`
-	High           float64   `json:"high"`
-	Low            float64   `json:"low"`
-	Close          float64   `json:"close"`
-	Volume         int64     `json:"volume"`
-	Change         float64   `json:"change"`
-	ChangePercent  float64   `json:"change_percent"`
-	Timestamp      time.Time `json:"timestamp"`
+	Symbol        string    `json:"symbol"`
+	Open          float64   `json:"open"`
+	High          float64   `json:"high"`
+	Low           float64   `json:"low"`
+	Close         float64   `json:"close"`
+	Volume        int64     `json:"volume"`
+	Change        float64   `json:"change"`
+	ChangePercent float64   `json:"change_percent"`
+	Timestamp     time.Time `json:"timestamp"`
 }
 
 // StrategySignalMessage 策略信号消息
 type StrategySignalMessage struct {
 	Symbol      string    `json:"symbol"`
-	SignalType  string    `json:"signal_type"`  // buy, sell, hold
-	Strength    float64   `json:"strength"`     // 0-1
+	SignalType  string    `json:"signal_type"` // buy, sell, hold
+	Strength    float64   `json:"strength"`    // 0-1
 	Price       float64   `json:"price"`
 	TargetPrice float64   `json:"target_price"`
 	StopLoss    float64   `json:"stop_loss"`
@@ -572,18 +572,18 @@ type StrategySignalMessage struct {
 // TradeEventMessage 交易事件消息
 type TradeEventMessage struct {
 	Symbol    string    `json:"symbol"`
-	Action    string    `json:"action"`    // buy, sell
+	Action    string    `json:"action"` // buy, sell
 	Quantity  int64     `json:"quantity"`
 	Price     float64   `json:"price"`
 	Amount    float64   `json:"amount"`
-	Status    string    `json:"status"`   // success, failed
+	Status    string    `json:"status"` // success, failed
 	Strategy  string    `json:"strategy"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
 // RiskAlertMessage 风险告警消息
 type RiskAlertMessage struct {
-	Level     string    `json:"level"`     // info, warning, error, critical
+	Level     string    `json:"level"` // info, warning, error, critical
 	Message   string    `json:"message"`
 	Symbol    string    `json:"symbol"`
 	Value     float64   `json:"value"`
@@ -593,7 +593,7 @@ type RiskAlertMessage struct {
 
 // SystemStatusMessage 系统状态消息
 type SystemStatusMessage struct {
-	Component  string    `json:"component"`  // scheduler, strategy, risk, etc.
+	Component string    `json:"component"` // scheduler, strategy, risk, etc.
 	Status    string    `json:"status"`    // running, stopped, error
 	Message   string    `json:"message"`
 	Uptime    string    `json:"uptime"`
@@ -608,7 +608,7 @@ type HeartbeatMessage struct {
 
 // ClientMessage 客户端消息
 type ClientMessage struct {
-	Type  string `json:"type"`  // subscribe, unsubscribe, ping
+	Type  string `json:"type"` // subscribe, unsubscribe, ping
 	Topic string `json:"topic"`
 }
 

@@ -11,92 +11,92 @@ import (
 
 // ParameterSearch 参数优化器
 type ParameterSearch struct {
-	mu         sync.RWMutex
-	config     *SearchConfig
-	engine     *BacktestEngine
-	results    map[string]*OptimizationResult
-	started    bool
-	completed  bool
-	progress   float64
+	mu        sync.RWMutex
+	config    *SearchConfig
+	engine    *BacktestEngine
+	results   map[string]*OptimizationResult
+	started   bool
+	completed bool
+	progress  float64
 }
 
 // SearchConfig 搜索配置
 type SearchConfig struct {
-	Method          string                    `yaml:"method"`           // 优化方法: grid_search, random_search, bayesian
-	Metric          string                    `yaml:"metric"`           // 优化目标: sharpe_ratio, total_return, max_drawdown
-	MaxIterations   int                       `yaml:"max_iterations"`   // 最大迭代次数
-	MinSamples      int                       `yaml:"min_samples"`      // 最小样本数
-	Parameters      map[string][]ParameterConfig `yaml:"parameters"`     // 参数配置
-	Constraints     map[string]Constraint     `yaml:"constraints"`     // 约束条件
-	Parallel        bool                     `yaml:"parallel"`         // 是否并行
-	MaxWorkers      int                      `yaml:"max_workers"`      // 最大工作协程数
-	RandomSeed      int64                    `yaml:"random_seed"`     // 随机种子
-	Timeout         time.Duration            `yaml:"timeout"`          // 超时时间
-	EarlyStopping   bool                     `yaml:"early_stopping"`   // 早停机制
-	Patience        int                      `yaml:"patience"`         // 早停耐心值
-	ValidationSplit float64                 `yaml:"validation_split"` // 验证集比例
+	Method          string                       `yaml:"method"`           // 优化方法: grid_search, random_search, bayesian
+	Metric          string                       `yaml:"metric"`           // 优化目标: sharpe_ratio, total_return, max_drawdown
+	MaxIterations   int                          `yaml:"max_iterations"`   // 最大迭代次数
+	MinSamples      int                          `yaml:"min_samples"`      // 最小样本数
+	Parameters      map[string][]ParameterConfig `yaml:"parameters"`       // 参数配置
+	Constraints     map[string]Constraint        `yaml:"constraints"`      // 约束条件
+	Parallel        bool                         `yaml:"parallel"`         // 是否并行
+	MaxWorkers      int                          `yaml:"max_workers"`      // 最大工作协程数
+	RandomSeed      int64                        `yaml:"random_seed"`      // 随机种子
+	Timeout         time.Duration                `yaml:"timeout"`          // 超时时间
+	EarlyStopping   bool                         `yaml:"early_stopping"`   // 早停机制
+	Patience        int                          `yaml:"patience"`         // 早停耐心值
+	ValidationSplit float64                      `yaml:"validation_split"` // 验证集比例
 }
 
 // ParameterConfig 参数配置
 type ParameterConfig struct {
-	Name    string      `yaml:"name"`    // 参数名称
-	Type    string      `yaml:"type"`    // 参数类型: int, float, string
-	Min     interface{} `yaml:"min"`     // 最小值
-	Max     interface{} `yaml:"max"`     // 最大值
-	Step    interface{} `yaml:"step"`    // 步长
-	Values  []interface{} `yaml:"values"` // 特定值列表
+	Name   string        `yaml:"name"`   // 参数名称
+	Type   string        `yaml:"type"`   // 参数类型: int, float, string
+	Min    interface{}   `yaml:"min"`    // 最小值
+	Max    interface{}   `yaml:"max"`    // 最大值
+	Step   interface{}   `yaml:"step"`   // 步长
+	Values []interface{} `yaml:"values"` // 特定值列表
 }
 
 // Constraint 约束条件
 type Constraint struct {
 	Expression string  `yaml:"expression"` // 约束表达式
-	Weight    float64 `yaml:"weight"`    // 权重
+	Weight     float64 `yaml:"weight"`     // 权重
 }
 
 // OptimizationResult 优化结果
 type OptimizationResult struct {
-	Parameters    map[string]interface{} `json:"parameters"`     // 最优参数
-	Metric       float64                `json:"metric"`        // 优化指标值
-	BacktestResults *BacktestResults     `json:"backtest_results"` // 回测结果
-	Rank         int                    `json:"rank"`         // 排名
-	StdError     float64                `json:"std_error"`    // 标准误差
-	ConfidenceInterval [2]float64       `json:"confidence_interval"` // 置信区间
-	Duration     time.Duration          `json:"duration"`     // 优化耗时
-	Iterations   int                    `json:"iterations"`   // 迭代次数
-	Timestamp    time.Time              `json:"timestamp"`
+	Parameters         map[string]interface{} `json:"parameters"`          // 最优参数
+	Metric             float64                `json:"metric"`              // 优化指标值
+	BacktestResults    *BacktestResults       `json:"backtest_results"`    // 回测结果
+	Rank               int                    `json:"rank"`                // 排名
+	StdError           float64                `json:"std_error"`           // 标准误差
+	ConfidenceInterval [2]float64             `json:"confidence_interval"` // 置信区间
+	Duration           time.Duration          `json:"duration"`            // 优化耗时
+	Iterations         int                    `json:"iterations"`          // 迭代次数
+	Timestamp          time.Time              `json:"timestamp"`
 }
 
 // SearchIteration 搜索迭代
 type SearchIteration struct {
-	ID          int                      `json:"id"`
-	Parameters  map[string]interface{}   `json:"parameters"`
-	Metric      float64                 `json:"metric"`
-	BacktestResults *BacktestResults     `json:"backtest_results"`
-	Duration    time.Duration           `json:"duration"`
-	Timestamp   time.Time               `json:"timestamp"`
-	Status     string                  `json:"status"` // running, completed, failed
-	Error      string                  `json:"error,omitempty"`
+	ID              int                    `json:"id"`
+	Parameters      map[string]interface{} `json:"parameters"`
+	Metric          float64                `json:"metric"`
+	BacktestResults *BacktestResults       `json:"backtest_results"`
+	Duration        time.Duration          `json:"duration"`
+	Timestamp       time.Time              `json:"timestamp"`
+	Status          string                 `json:"status"` // running, completed, failed
+	Error           string                 `json:"error,omitempty"`
 }
 
 // ParameterSpace 参数空间
 type ParameterSpace struct {
 	Dimensions []ParameterDimension `json:"dimensions"`
-	TotalSize int                  `json:"total_size"`
+	TotalSize  int                  `json:"total_size"`
 }
 
 // ParameterDimension 参数维度
 type ParameterDimension struct {
-	Name    string      `json:"name"`
-	Type    string      `json:"type"`
-	Values  []interface{} `json:"values"`
+	Name   string        `json:"name"`
+	Type   string        `json:"type"`
+	Values []interface{} `json:"values"`
 }
 
 // NewParameterSearch 创建参数优化器
 func NewParameterSearch(config SearchConfig, engine *BacktestEngine) *ParameterSearch {
 	return &ParameterSearch{
-		config:  &config,
-		engine:  engine,
-		results: make(map[string]*OptimizationResult),
+		config:   &config,
+		engine:   engine,
+		results:  make(map[string]*OptimizationResult),
 		progress: 0.0,
 	}
 }
@@ -147,7 +147,7 @@ func (p *ParameterSearch) Optimize(ctx context.Context) (*OptimizationResult, er
 	// 存储所有结果
 	p.storeResults(allResults)
 
-	log.Printf("Parameter optimization completed: best_metric=%.4f, iterations=%d", 
+	log.Printf("Parameter optimization completed: best_metric=%.4f, iterations=%d",
 		bestResult.Metric, len(allResults))
 
 	return bestResult, nil
@@ -286,13 +286,13 @@ func (p *ParameterSearch) gridSearch(ctx context.Context, space *ParameterSpace)
 		}
 
 		iteration := SearchIteration{
-			ID:             iterationID,
-			Parameters:     params,
-			Metric:         metric,
+			ID:              iterationID,
+			Parameters:      params,
+			Metric:          metric,
 			BacktestResults: backtestResults,
-			Duration:       time.Since(iterationStart),
-			Timestamp:     startTime,
-			Status:         "completed",
+			Duration:        time.Since(iterationStart),
+			Timestamp:       startTime,
+			Status:          "completed",
 		}
 
 		iterations = append(iterations, iteration)
@@ -300,12 +300,12 @@ func (p *ParameterSearch) gridSearch(ctx context.Context, space *ParameterSpace)
 		// 更新最佳结果
 		if bestResult == nil || p.isBetterResult(metric, bestResult.Metric) {
 			bestResult = &OptimizationResult{
-				Parameters:    params,
-				Metric:       metric,
+				Parameters:      params,
+				Metric:          metric,
 				BacktestResults: backtestResults,
-				Duration:     time.Since(startTime),
-				Iterations:   iterationID,
-				Timestamp:   startTime,
+				Duration:        time.Since(startTime),
+				Iterations:      iterationID,
+				Timestamp:       startTime,
 			}
 		}
 
@@ -373,13 +373,13 @@ func (p *ParameterSearch) randomSearch(ctx context.Context, space *ParameterSpac
 		}
 
 		iteration := SearchIteration{
-			ID:             i,
-			Parameters:     params,
-			Metric:         metric,
+			ID:              i,
+			Parameters:      params,
+			Metric:          metric,
 			BacktestResults: backtestResults,
-			Duration:       time.Since(iterationStart),
-			Timestamp:     startTime,
-			Status:         "completed",
+			Duration:        time.Since(iterationStart),
+			Timestamp:       startTime,
+			Status:          "completed",
 		}
 
 		iterations = append(iterations, iteration)
@@ -387,12 +387,12 @@ func (p *ParameterSearch) randomSearch(ctx context.Context, space *ParameterSpac
 		// 更新最佳结果
 		if bestResult == nil || p.isBetterResult(metric, bestResult.Metric) {
 			bestResult = &OptimizationResult{
-				Parameters:    params,
-				Metric:       metric,
+				Parameters:      params,
+				Metric:          metric,
 				BacktestResults: backtestResults,
-				Duration:     time.Since(startTime),
-				Iterations:   i,
-				Timestamp:   startTime,
+				Duration:        time.Since(startTime),
+				Iterations:      i,
+				Timestamp:       startTime,
 			}
 		}
 
@@ -573,13 +573,13 @@ func (p *ParameterSearch) storeResults(iterations []SearchIteration) {
 		if iteration.Status == "completed" {
 			key := fmt.Sprintf("result_%d", i)
 			p.results[key] = &OptimizationResult{
-				Parameters:     iteration.Parameters,
-				Metric:        iteration.Metric,
+				Parameters:      iteration.Parameters,
+				Metric:          iteration.Metric,
 				BacktestResults: iteration.BacktestResults,
-				Rank:          i + 1,
-				Duration:      iteration.Duration,
-				Iterations:    i + 1,
-				Timestamp:     iteration.Timestamp,
+				Rank:            i + 1,
+				Duration:        iteration.Duration,
+				Iterations:      i + 1,
+				Timestamp:       iteration.Timestamp,
 			}
 		}
 	}
@@ -616,7 +616,7 @@ func (p *ParameterSearch) GetAllResults() map[string]*OptimizationResult {
 // GetTopResults 获取前N个结果
 func (p *ParameterSearch) GetTopResults(n int) []*OptimizationResult {
 	results := make([]*OptimizationResult, 0, len(p.results))
-	
+
 	for _, result := range p.results {
 		results = append(results, result)
 	}

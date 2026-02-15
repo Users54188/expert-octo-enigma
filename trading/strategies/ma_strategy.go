@@ -12,17 +12,17 @@ import (
 
 // Strategy type constants (must match strategy_loader.go)
 const (
-	MAStrategyType StrategyType = "ma"
+	MAStrategyType  StrategyType = "ma"
 	RSIStrategyType StrategyType = "rsi"
-	AIStrategyType StrategyType = "ai"
-	MLStrategyType StrategyType = "ml"
+	AIStrategyType  StrategyType = "ai"
+	MLStrategyType  StrategyType = "ml"
 )
 
 // MAStrategy 均线策略
 type MAStrategy struct {
 	*BaseStrategy
-	shortPeriod int     // 短期均线周期
-	longPeriod  int     // 长期均线周期
+	shortPeriod int       // 短期均线周期
+	longPeriod  int       // 长期均线周期
 	dataSeries  []float64 // 价格数据序列
 	maSeries    []float64 // 均线数据序列
 }
@@ -31,10 +31,10 @@ type MAStrategy struct {
 func NewMAStrategy() Strategy {
 	strategy := &MAStrategy{
 		BaseStrategy: NewBaseStrategy("ma_strategy", 0.3),
-		shortPeriod: 5,
-		longPeriod:  20,
-		dataSeries:  make([]float64, 0, 100),
-		maSeries:    make([]float64, 0, 100),
+		shortPeriod:  5,
+		longPeriod:   20,
+		dataSeries:   make([]float64, 0, 100),
+		maSeries:     make([]float64, 0, 100),
 	}
 
 	// 设置默认参数
@@ -145,10 +145,10 @@ func (m *MAStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 
 	signal = NewSignal(marketData.Symbol, signalType, strength, currentPrice)
 	signal.TargetPrice = m.calculateTargetPrice(currentPrice, signalType, 0.03) // 3%目标收益
-	signal.StopLoss = m.calculateStopLoss(currentPrice, signalType, 0.02)      // 2%止损
+	signal.StopLoss = m.calculateStopLoss(currentPrice, signalType, 0.02)       // 2%止损
 	signal.Reason = reason
 
-	log.Printf("MA strategy generated signal: %s %s (strength: %.3f)", 
+	log.Printf("MA strategy generated signal: %s %s (strength: %.3f)",
 		marketData.Symbol, signalType, strength)
 
 	return signal, nil
@@ -157,7 +157,7 @@ func (m *MAStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 // OnTrade 交易回调
 func (m *MAStrategy) OnTrade(ctx context.Context, trade *trading.TradeRecord) error {
 	// MA策略的交易回调：记录交易信息
-	log.Printf("MA strategy trade executed: %s %d shares at %.2f", 
+	log.Printf("MA strategy trade executed: %s %d shares at %.2f",
 		trade.Symbol, trade.Quantity, trade.Price)
 	return nil
 }
@@ -172,7 +172,7 @@ func (m *MAStrategy) OnDailyClose(ctx context.Context, date time.Time) error {
 // updatePriceData 更新价格数据
 func (m *MAStrategy) updatePriceData(price float64) {
 	m.dataSeries = append(m.dataSeries, price)
-	
+
 	// 限制数据长度，避免内存泄露
 	if len(m.dataSeries) > 200 {
 		m.dataSeries = m.dataSeries[1:]

@@ -16,18 +16,18 @@ type CooldownRisk struct {
 	config       *CooldownRiskConfig
 	tradeHistory *trading.TradeHistory
 	lastTrades   map[string]time.Time // 股票代码 -> 最后交易时间
-	tradeCounts  map[string]int     // 股票代码 -> 交易次数
+	tradeCounts  map[string]int       // 股票代码 -> 交易次数
 	blacklist    map[string]time.Time // 黑名单股票和解除时间
 }
 
 // CooldownRiskConfig 冷却风险配置
 type CooldownRiskConfig struct {
-	MinTradeInterval   time.Duration `yaml:"min_trade_interval"`   // 最小交易间隔
-	MaxDailyTrades     int           `yaml:"max_daily_trades"`     // 每日最大交易次数
-	MinOrderInterval   time.Duration `yaml:"min_order_interval"`   // 最小下单间隔
-	MaxWeeklyTrades    int           `yaml:"max_weekly_trades"`    // 每周最大交易次数
-	BlacklistDuration  time.Duration `yaml:"blacklist_duration"`   // 黑名单持续时间
-	EnableCooldown     bool          `yaml:"enable_cooldown"`      // 启用冷却机制
+	MinTradeInterval  time.Duration `yaml:"min_trade_interval"` // 最小交易间隔
+	MaxDailyTrades    int           `yaml:"max_daily_trades"`   // 每日最大交易次数
+	MinOrderInterval  time.Duration `yaml:"min_order_interval"` // 最小下单间隔
+	MaxWeeklyTrades   int           `yaml:"max_weekly_trades"`  // 每周最大交易次数
+	BlacklistDuration time.Duration `yaml:"blacklist_duration"` // 黑名单持续时间
+	EnableCooldown    bool          `yaml:"enable_cooldown"`    // 启用冷却机制
 }
 
 // NewCooldownRisk 创建冷却风险管理器
@@ -72,7 +72,7 @@ func (c *CooldownRisk) CheckTradeCooldown(ctx context.Context, symbol string) (*
 		interval := now.Sub(lastTrade)
 		if interval < c.config.MinTradeInterval {
 			result.Allowed = false
-			result.Reasons = append(result.Reasons, 
+			result.Reasons = append(result.Reasons,
 				fmt.Sprintf("最小交易间隔未满足: %v < %v", interval, c.config.MinTradeInterval))
 		}
 	}
@@ -81,7 +81,7 @@ func (c *CooldownRisk) CheckTradeCooldown(ctx context.Context, symbol string) (*
 	dailyTrades := c.getDailyTradeCount(symbol, now)
 	if dailyTrades >= c.config.MaxDailyTrades {
 		result.Allowed = false
-		result.Reasons = append(result.Reasons, 
+		result.Reasons = append(result.Reasons,
 			fmt.Sprintf("今日交易次数已达上限: %d/%d", dailyTrades, c.config.MaxDailyTrades))
 	}
 
@@ -89,7 +89,7 @@ func (c *CooldownRisk) CheckTradeCooldown(ctx context.Context, symbol string) (*
 	weeklyTrades := c.getWeeklyTradeCount(symbol, now)
 	if weeklyTrades >= c.config.MaxWeeklyTrades {
 		result.Allowed = false
-		result.Reasons = append(result.Reasons, 
+		result.Reasons = append(result.Reasons,
 			fmt.Sprintf("本周交易次数已达上限: %d/%d", weeklyTrades, c.config.MaxWeeklyTrades))
 	}
 
@@ -97,7 +97,7 @@ func (c *CooldownRisk) CheckTradeCooldown(ctx context.Context, symbol string) (*
 	globalCooldown := c.getGlobalCooldownTime()
 	if globalCooldown > 0 {
 		result.Allowed = false
-		result.Reasons = append(result.Reasons, 
+		result.Reasons = append(result.Reasons,
 			fmt.Sprintf("全局冷却中: %v", globalCooldown))
 	}
 
@@ -148,10 +148,10 @@ func (c *CooldownRisk) isBlacklisted(symbol string) bool {
 func (c *CooldownRisk) getDailyTradeCount(symbol string, now time.Time) int {
 	// 简化实现：使用内存中的计数
 	// 实际应该查询数据库获取真实的历史交易记录
-	
+
 	// 检查是否跨日重置
 	day := now.Format("2006-01-02")
-	
+
 	// 这里简化处理，实际应该根据日期重置计数
 	return c.tradeCounts[symbol]
 }
@@ -160,10 +160,10 @@ func (c *CooldownRisk) getDailyTradeCount(symbol string, now time.Time) int {
 func (c *CooldownRisk) getWeeklyTradeCount(symbol string, now time.Time) int {
 	// 简化实现：使用内存中的计数
 	// 实际应该查询数据库获取真实的历史交易记录
-	
+
 	// 检查是否跨周重置
 	week := getWeekString(now)
-	
+
 	// 这里简化处理，实际应该根据周重置计数
 	return c.tradeCounts[symbol] / 7 // 简化计算
 }
@@ -172,10 +172,10 @@ func (c *CooldownRisk) getWeeklyTradeCount(symbol string, now time.Time) int {
 func (c *CooldownRisk) getGlobalCooldownTime() time.Duration {
 	// 简化实现：基于最近交易时间计算全局冷却
 	// 实际应该根据系统状态和配置计算
-	
+
 	now := time.Now()
 	var latestTime time.Time
-	
+
 	for _, lastTrade := range c.lastTrades {
 		if lastTrade.After(latestTime) {
 			latestTime = lastTrade
@@ -198,14 +198,14 @@ func (c *CooldownRisk) getGlobalCooldownTime() time.Duration {
 func (c *CooldownRisk) shouldAddToBlacklist(symbol string) bool {
 	// 简化实现：基于交易频率判断
 	// 实际应该基于交易盈亏情况
-	
+
 	count := c.tradeCounts[symbol]
-	
+
 	// 如果在短时间内交易次数过多，加入黑名单
 	if count > 10 {
 		return true
 	}
-	
+
 	return false
 }
 
@@ -216,13 +216,13 @@ func (c *CooldownRisk) GetCooldownStatus(symbol string) *CooldownStatus {
 
 	now := time.Now()
 	status := &CooldownStatus{
-		Symbol:           symbol,
-		Timestamp:        now,
-		LastTradeTime:    c.lastTrades[symbol],
-		TradeCount:       c.tradeCounts[symbol],
-		DailyTrades:      c.getDailyTradeCount(symbol, now),
-		WeeklyTrades:     c.getWeeklyTradeCount(symbol, now),
-		Blacklisted:      c.isBlacklisted(symbol),
+		Symbol:            symbol,
+		Timestamp:         now,
+		LastTradeTime:     c.lastTrades[symbol],
+		TradeCount:        c.tradeCounts[symbol],
+		DailyTrades:       c.getDailyTradeCount(symbol, now),
+		WeeklyTrades:      c.getWeeklyTradeCount(symbol, now),
+		Blacklisted:       c.isBlacklisted(symbol),
 		CooldownRemaining: 0,
 	}
 
@@ -298,7 +298,7 @@ func (c *CooldownRisk) SetConfig(config CooldownRiskConfig) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.config = &config
-	log.Printf("Cooldown risk config updated: interval=%v, max_daily=%d", 
+	log.Printf("Cooldown risk config updated: interval=%v, max_daily=%d",
 		config.MinTradeInterval, config.MaxDailyTrades)
 }
 
@@ -330,19 +330,19 @@ func (c *CooldownRisk) GetStats() *CooldownStats {
 
 	return &CooldownStats{
 		TotalTrackedSymbols: len(c.lastTrades),
-		BlacklistedSymbols: len(c.blacklist),
-		TotalTrades:        totalTrades,
-		LastTradeTime:      latestTrade,
-		Enabled:            c.config.EnableCooldown,
+		BlacklistedSymbols:  len(c.blacklist),
+		TotalTrades:         totalTrades,
+		LastTradeTime:       latestTrade,
+		Enabled:             c.config.EnableCooldown,
 	}
 }
 
 // CooldownCheckResult 冷却检查结果
 type CooldownCheckResult struct {
-	Symbol    string        `json:"symbol"`
-	Timestamp time.Time     `json:"timestamp"`
-	Allowed   bool          `json:"allowed"`
-	Reasons   []string      `json:"reasons"`
+	Symbol    string    `json:"symbol"`
+	Timestamp time.Time `json:"timestamp"`
+	Allowed   bool      `json:"allowed"`
+	Reasons   []string  `json:"reasons"`
 }
 
 // CooldownStatus 冷却状态
@@ -359,11 +359,11 @@ type CooldownStatus struct {
 
 // CooldownStats 冷却统计
 type CooldownStats struct {
-	TotalTrackedSymbols int           `json:"total_tracked_symbols"`
-	BlacklistedSymbols  int           `json:"blacklisted_symbols"`
-	TotalTrades         int           `json:"total_trades"`
-	LastTradeTime       time.Time     `json:"last_trade_time"`
-	Enabled             bool          `json:"enabled"`
+	TotalTrackedSymbols int       `json:"total_tracked_symbols"`
+	BlacklistedSymbols  int       `json:"blacklisted_symbols"`
+	TotalTrades         int       `json:"total_trades"`
+	LastTradeTime       time.Time `json:"last_trade_time"`
+	Enabled             bool      `json:"enabled"`
 }
 
 // 工具函数

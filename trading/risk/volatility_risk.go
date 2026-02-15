@@ -13,34 +13,34 @@ import (
 
 // VolatilityRisk 波动率风险管理
 type VolatilityRisk struct {
-	mu             sync.RWMutex
-	config         *VolatilityRiskConfig
+	mu              sync.RWMutex
+	config          *VolatilityRiskConfig
 	positionManager *trading.PositionManager
-	priceHistory   map[string][]PricePoint // 价格历史
-	volatilityCache map[string]float64   // 波动率缓存
+	priceHistory    map[string][]PricePoint // 价格历史
+	volatilityCache map[string]float64      // 波动率缓存
 	lastCalculation time.Time
 }
 
 // PricePoint 价格点
 type PricePoint struct {
-	Price   float64   `json:"price"`
-	Time    time.Time `json:"time"`
+	Price float64   `json:"price"`
+	Time  time.Time `json:"time"`
 }
 
 // VolatilityRiskConfig 波动率风险配置
 type VolatilityRiskConfig struct {
-	MaxVolatility      float64 `yaml:"max_volatility"`      // 最大波动率
+	MaxVolatility       float64 `yaml:"max_volatility"`       // 最大波动率
 	VolatilityThreshold float64 `yaml:"volatility_threshold"` // 波动率阈值
-	LookbackPeriod    int     `yaml:"lookback_period"`    // 回看期数
-	AdjustmentFactor  float64 `yaml:"adjustment_factor"`  // 调整因子
+	LookbackPeriod      int     `yaml:"lookback_period"`      // 回看期数
+	AdjustmentFactor    float64 `yaml:"adjustment_factor"`    // 调整因子
 }
 
 // NewVolatilityRisk 创建波动率风险管理器
 func NewVolatilityRisk(config VolatilityRiskConfig, positionManager *trading.PositionManager) *VolatilityRisk {
 	return &VolatilityRisk{
-		config:         &config,
+		config:          &config,
 		positionManager: positionManager,
-		priceHistory:   make(map[string][]PricePoint),
+		priceHistory:    make(map[string][]PricePoint),
 		volatilityCache: make(map[string]float64),
 	}
 }
@@ -100,11 +100,12 @@ func (v *VolatilityRisk) CalculateVolatility(ctx context.Context, symbol string)
 func (v *VolatilityRisk) CheckVolatilityRisk(ctx context.Context) ([]*VolatilityRiskAlert, error) {
 	alerts := make([]*VolatilityRiskAlert, 0)
 
-	// 获取所有持仓
-	positions, err := v.positionManager.GetAllPositions(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get positions: %v", err)
+	if v.positionManager == nil {
+		return nil, fmt.Errorf("position manager not configured")
 	}
+
+	// 获取所有持仓
+	positions := v.positionManager.GetAllPositions()
 
 	for _, pos := range positions {
 		// 计算或获取缓存的波动率
@@ -162,7 +163,7 @@ func (v *VolatilityRisk) GetPositionSizing(ctx context.Context, symbol string, b
 
 	adjustedSize := baseSize * adjustmentRatio
 
-	log.Printf("Position sizing for %s: base=%.2f, volatility=%.4f, adjusted=%.2f (ratio=%.2f)", 
+	log.Printf("Position sizing for %s: base=%.2f, volatility=%.4f, adjusted=%.2f (ratio=%.2f)",
 		symbol, baseSize, volatility, adjustedSize, adjustmentRatio)
 
 	return adjustedSize, nil
@@ -228,7 +229,7 @@ func (v *VolatilityRisk) SetConfig(config VolatilityRiskConfig) {
 	defer v.mu.Unlock()
 	v.config = &config
 	v.volatilityCache = make(map[string]float64) // 清除缓存
-	log.Printf("Volatility risk config updated: max=%.4f, threshold=%.4f", 
+	log.Printf("Volatility risk config updated: max=%.4f, threshold=%.4f",
 		config.MaxVolatility, config.VolatilityThreshold)
 }
 
@@ -298,6 +299,6 @@ type VolatilityRiskAlert struct {
 type VolatilityRiskMetrics struct {
 	Timestamp           time.Time `json:"timestamp"`
 	PortfolioVolatility float64   `json:"portfolio_volatility"`
-	PositionCount      int       `json:"position_count"`
-	HighVolPositions   int       `json:"high_vol_positions"`
+	PositionCount       int       `json:"position_count"`
+	HighVolPositions    int       `json:"high_vol_positions"`
 }

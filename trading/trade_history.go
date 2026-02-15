@@ -222,14 +222,14 @@ func (th *TradeHistory) GetOrders(limit int) ([]Order, error) {
 
 // DailyPnL 日度盈亏
 type DailyPnL struct {
-	Date          string  `json:"date"`
-	OpenEquity    float64 `json:"open_equity"`
-	CloseEquity   float64 `json:"close_equity"`
-	PnL           float64 `json:"pnl"`
-	PnLPercent    float64 `json:"pnl_percent"`
-	TradeCount    int     `json:"trade_count"`
-	BuyCount      int     `json:"buy_count"`
-	SellCount     int     `json:"sell_count"`
+	Date        string  `json:"date"`
+	OpenEquity  float64 `json:"open_equity"`
+	CloseEquity float64 `json:"close_equity"`
+	PnL         float64 `json:"pnl"`
+	PnLPercent  float64 `json:"pnl_percent"`
+	TradeCount  int     `json:"trade_count"`
+	BuyCount    int     `json:"buy_count"`
+	SellCount   int     `json:"sell_count"`
 }
 
 // SaveDailyPnL 保存日度盈亏
@@ -287,15 +287,15 @@ func (th *TradeHistory) GetDailyPnL(days int) ([]DailyPnL, error) {
 
 // PerformanceMetrics 绩效指标
 type PerformanceMetrics struct {
-	TotalReturn      float64 `json:"total_return"`       // 总收益率
-	DailyAvgReturn   float64 `json:"daily_avg_return"`    // 日均收益率
-	MaxDrawdown      float64 `json:"max_drawdown"`       // 最大回撤
-	WinRate          float64 `json:"win_rate"`           // 胜率
-	ProfitFactor     float64 `json:"profit_factor"`      // 盈亏比
-	TotalTrades      int     `json:"total_trades"`       // 总交易次数
-	WinTrades        int     `json:"win_trades"`         // 盈利交易次数
-	LossTrades       int     `json:"loss_trades"`        // 亏损交易次数
-	SharpeRatio      float64 `json:"sharpe_ratio"`       // 夏普比率（简化版）
+	TotalReturn    float64 `json:"total_return"`     // 总收益率
+	DailyAvgReturn float64 `json:"daily_avg_return"` // 日均收益率
+	MaxDrawdown    float64 `json:"max_drawdown"`     // 最大回撤
+	WinRate        float64 `json:"win_rate"`         // 胜率
+	ProfitFactor   float64 `json:"profit_factor"`    // 盈亏比
+	TotalTrades    int     `json:"total_trades"`     // 总交易次数
+	WinTrades      int     `json:"win_trades"`       // 盈利交易次数
+	LossTrades     int     `json:"loss_trades"`      // 亏损交易次数
+	SharpeRatio    float64 `json:"sharpe_ratio"`     // 夏普比率（简化版）
 }
 
 // CalculatePerformance 计算绩效指标

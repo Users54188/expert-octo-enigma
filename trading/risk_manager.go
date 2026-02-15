@@ -10,20 +10,20 @@ import (
 
 // RiskManager 风险管理器
 type RiskManager struct {
-	config      RiskConfig
-	connector   *BrokerConnector
-	tradeHistory *TradeHistory
-	mu          sync.RWMutex
-	dailyPnL    float64
+	config           RiskConfig
+	connector        *BrokerConnector
+	tradeHistory     *TradeHistory
+	mu               sync.RWMutex
+	dailyPnL         float64
 	dailyStartEquity float64
-	emergencyStop bool
+	emergencyStop    bool
 }
 
 // RiskConfig 风险配置
 type RiskConfig struct {
-	InitialCapital    float64 `yaml:"initial_capital" json:"initial_capital"`       // 初始资金
+	InitialCapital    float64 `yaml:"initial_capital" json:"initial_capital"`         // 初始资金
 	MaxSinglePosition float64 `yaml:"max_single_position" json:"max_single_position"` // 单只股票最大仓位比例
-	MaxPositions      int     `yaml:"max_positions" json:"max_positions"`           // 最大持仓数量
+	MaxPositions      int     `yaml:"max_positions" json:"max_positions"`             // 最大持仓数量
 	MaxDailyLoss      float64 `yaml:"max_daily_loss" json:"max_daily_loss"`           // 单日最大亏损比例
 	MinOrderAmount    float64 `yaml:"min_order_amount" json:"min_order_amount"`       // 最小下单金额
 	StopLossPercent   float64 `yaml:"stop_loss_percent" json:"stop_loss_percent"`     // 单只股票止损比例
@@ -31,12 +31,12 @@ type RiskConfig struct {
 
 // DefaultRiskConfig 默认风险配置
 var DefaultRiskConfig = RiskConfig{
-	InitialCapital:    100.0,    // 100元初始资金
-	MaxSinglePosition: 0.3,      // 单只股票最多30%
-	MaxPositions:      3,        // 最多3只股票
-	MaxDailyLoss:      0.1,      // 单日亏损10%全部平仓
-	MinOrderAmount:    100.0,    // 最小下单金额100元
-	StopLossPercent:   0.05,     // 单只股票亏损5%止损
+	InitialCapital:    100.0, // 100元初始资金
+	MaxSinglePosition: 0.3,   // 单只股票最多30%
+	MaxPositions:      3,     // 最多3只股票
+	MaxDailyLoss:      0.1,   // 单日亏损10%全部平仓
+	MinOrderAmount:    100.0, // 最小下单金额100元
+	StopLossPercent:   0.05,  // 单只股票亏损5%止损
 }
 
 // NewRiskManager 创建风险管理器
@@ -46,10 +46,10 @@ func NewRiskManager(config RiskConfig, connector *BrokerConnector, tradeHistory 
 	}
 
 	rm := &RiskManager{
-		config:       config,
-		connector:    connector,
-		tradeHistory: tradeHistory,
-		dailyPnL:     0,
+		config:        config,
+		connector:     connector,
+		tradeHistory:  tradeHistory,
+		dailyPnL:      0,
 		emergencyStop: false,
 	}
 
@@ -249,11 +249,11 @@ func (rm *RiskManager) UpdateDailyPnL(ctx context.Context) (float64, error) {
 	if rm.tradeHistory != nil {
 		date := time.Now().Format("2006-01-02")
 		_ = rm.tradeHistory.SaveDailyPnL(DailyPnL{
-			Date:     date,
-			OpenEquity: rm.dailyStartEquity,
+			Date:        date,
+			OpenEquity:  rm.dailyStartEquity,
 			CloseEquity: balance.TotalAssets,
-			PnL:      rm.dailyPnL,
-			PnLPercent: rm.dailyPnL / rm.dailyStartEquity,
+			PnL:         rm.dailyPnL,
+			PnLPercent:  rm.dailyPnL / rm.dailyStartEquity,
 		})
 	}
 
@@ -269,12 +269,12 @@ func (rm *RiskManager) GetRiskMetrics() RiskMetrics {
 	positions, _ := rm.connector.GetCachedPositions()
 
 	metrics := RiskMetrics{
-		InitialCapital: rm.config.InitialCapital,
-		CurrentEquity: 0,
-		DailyPnL:       rm.dailyPnL,
+		InitialCapital:  rm.config.InitialCapital,
+		CurrentEquity:   0,
+		DailyPnL:        rm.dailyPnL,
 		DailyPnLPercent: 0,
-		PositionCount:  len(positions),
-		EmergencyStop:  rm.emergencyStop,
+		PositionCount:   len(positions),
+		EmergencyStop:   rm.emergencyStop,
 	}
 
 	if balance != nil {
@@ -342,7 +342,7 @@ func (o *OrderRequest) CalculateQuantity() int {
 	if o.Price <= 0 {
 		return 0
 	}
-	return int(o.Amount / o.Price / 100) * 100 // 按手数（100股）下单
+	return int(o.Amount/o.Price/100) * 100 // 按手数（100股）下单
 }
 
 var (

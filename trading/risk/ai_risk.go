@@ -14,45 +14,45 @@ import (
 
 // AIRisk DeepSeek AI风险评分
 type AIRisk struct {
-	mu           sync.RWMutex
-	config       *AIRiskConfig
-	llmAnalyzer  *llm.DeepSeekAnalyzer
-	scoreCache   map[string]*RiskScore // 风险评分缓存
-	analysisHistory []RiskAnalysis // 分析历史
+	mu              sync.RWMutex
+	config          *AIRiskConfig
+	llmAnalyzer     *llm.DeepSeekAnalyzer
+	scoreCache      map[string]*RiskScore // 风险评分缓存
+	analysisHistory []RiskAnalysis        // 分析历史
 	positionManager *trading.PositionManager
-	lastAnalysis   time.Time
+	lastAnalysis    time.Time
 }
 
 // RiskScore AI风险评分
 type RiskScore struct {
-	Symbol         string    `json:"symbol"`
-	OverallScore   float64   `json:"overall_score"`    // 总体风险评分 0-1
-	MarketRisk     float64   `json:"market_risk"`     // 市场风险 0-1
-	TechnicalRisk  float64   `json:"technical_risk"`  // 技术风险 0-1
+	Symbol          string    `json:"symbol"`
+	OverallScore    float64   `json:"overall_score"`    // 总体风险评分 0-1
+	MarketRisk      float64   `json:"market_risk"`      // 市场风险 0-1
+	TechnicalRisk   float64   `json:"technical_risk"`   // 技术风险 0-1
 	FundamentalRisk float64   `json:"fundamental_risk"` // 基本面风险 0-1
-	VolatilityRisk float64   `json:"volatility_risk"`  // 波动率风险 0-1
-	TrendRisk      float64   `json:"trend_risk"`      // 趋势风险 0-1
-	VolumeRisk     float64   `json:"volume_risk"`     // 成交量风险 0-1
-	AIConfidence   float64   `json:"ai_confidence"`   // AI分析置信度 0-1
-	RiskLevel      string    `json:"risk_level"`      // low, medium, high, extreme
-	Recommendations []string `json:"recommendations"`  // 建议
-	Timestamp      time.Time `json:"timestamp"`
-	ModelVersion   string    `json:"model_version"`
+	VolatilityRisk  float64   `json:"volatility_risk"`  // 波动率风险 0-1
+	TrendRisk       float64   `json:"trend_risk"`       // 趋势风险 0-1
+	VolumeRisk      float64   `json:"volume_risk"`      // 成交量风险 0-1
+	AIConfidence    float64   `json:"ai_confidence"`    // AI分析置信度 0-1
+	RiskLevel       string    `json:"risk_level"`       // low, medium, high, extreme
+	Recommendations []string  `json:"recommendations"`  // 建议
+	Timestamp       time.Time `json:"timestamp"`
+	ModelVersion    string    `json:"model_version"`
 }
 
 // RiskAnalysis AI风险分析
 type RiskAnalysis struct {
-	Symbol       string          `json:"symbol"`
-	Score        *RiskScore      `json:"score"`
-	RawAnalysis  string          `json:"raw_analysis"` // 原始AI分析文本
-	MarketData   json.RawMessage `json:"market_data"`  // 市场数据快照
-	Timestamp    time.Time       `json:"timestamp"`
+	Symbol      string          `json:"symbol"`
+	Score       *RiskScore      `json:"score"`
+	RawAnalysis string          `json:"raw_analysis"` // 原始AI分析文本
+	MarketData  json.RawMessage `json:"market_data"`  // 市场数据快照
+	Timestamp   time.Time       `json:"timestamp"`
 }
 
 // AIRiskConfig AI风险配置
 type AIRiskConfig struct {
-	Enabled           bool          `yaml:"enabled"`             // 是否启用
-	AnalysisInterval   time.Duration `yaml:"analysis_interval"`   // 分析间隔
+	Enabled           bool          `yaml:"enabled"`            // 是否启用
+	AnalysisInterval  time.Duration `yaml:"analysis_interval"`  // 分析间隔
 	CacheExpiry       time.Duration `yaml:"cache_expiry"`       // 缓存过期时间
 	RiskThreshold     float64       `yaml:"risk_threshold"`     // 风险阈值
 	AutoAlert         bool          `yaml:"auto_alert"`         // 自动告警
@@ -64,8 +64,8 @@ type AIRiskConfig struct {
 // NewAIRisk 创建AI风险评分器
 func NewAIRisk(config AIRiskConfig, llmAnalyzer *llm.DeepSeekAnalyzer, positionManager *trading.PositionManager) *AIRisk {
 	return &AIRisk{
-		config:         &config,
-		llmAnalyzer:    llmAnalyzer,
+		config:          &config,
+		llmAnalyzer:     llmAnalyzer,
 		scoreCache:      make(map[string]*RiskScore),
 		analysisHistory: make([]RiskAnalysis, 0, 100),
 		positionManager: positionManager,
@@ -106,10 +106,10 @@ func (a *AIRisk) AnalyzeRisk(ctx context.Context, symbol string, marketData map[
 
 	// 添加到历史
 	analysis := RiskAnalysis{
-		Symbol:    symbol,
-		Score:     score,
+		Symbol:     symbol,
+		Score:      score,
 		MarketData: a.serializeMarketData(marketData),
-		Timestamp: time.Now(),
+		Timestamp:  time.Now(),
 	}
 	a.addToHistory(analysis)
 
@@ -118,7 +118,7 @@ func (a *AIRisk) AnalyzeRisk(ctx context.Context, symbol string, marketData map[
 		go a.triggerRiskAlert(symbol, score)
 	}
 
-	log.Printf("AI risk analysis completed for %s: overall=%.3f, level=%s", 
+	log.Printf("AI risk analysis completed for %s: overall=%.3f, level=%s",
 		symbol, score.OverallScore, score.RiskLevel)
 
 	return score, nil
@@ -134,7 +134,7 @@ func (a *AIRisk) performAIRiskAnalysis(ctx context.Context, symbol string, marke
 	prompt := a.buildRiskAnalysisPrompt(symbol, marketData)
 
 	// 调用AI分析
-	response, err := a.llmAnalyzer.Analyze(ctx, prompt)
+	response, err := a.llmAnalyzer.AnalyzePrompt(ctx, prompt)
 	if err != nil {
 		return nil, fmt.Errorf("AI analysis failed: %v", err)
 	}
@@ -204,14 +204,14 @@ func (a *AIRisk) buildRiskAnalysisPrompt(symbol string, marketData map[string]in
 // parseRiskScoreResponse 解析AI风险评分响应
 func (a *AIRisk) parseRiskScoreResponse(response string, symbol string) (*RiskScore, error) {
 	var aiData struct {
-		MarketRisk        float64   `json:"market_risk"`
-		TechnicalRisk     float64   `json:"technical_risk"`
-		FundamentalRisk   float64   `json:"fundamental_risk"`
-		VolatilityRisk    float64   `json:"volatility_risk"`
-		TrendRisk         float64   `json:"trend_risk"`
-		VolumeRisk        float64   `json:"volume_risk"`
-		AIConfidence      float64   `json:"ai_confidence"`
-		Recommendations    []string  `json:"recommendations"`
+		MarketRisk      float64  `json:"market_risk"`
+		TechnicalRisk   float64  `json:"technical_risk"`
+		FundamentalRisk float64  `json:"fundamental_risk"`
+		VolatilityRisk  float64  `json:"volatility_risk"`
+		TrendRisk       float64  `json:"trend_risk"`
+		VolumeRisk      float64  `json:"volume_risk"`
+		AIConfidence    float64  `json:"ai_confidence"`
+		Recommendations []string `json:"recommendations"`
 	}
 
 	// 尝试解析JSON
@@ -221,26 +221,26 @@ func (a *AIRisk) parseRiskScoreResponse(response string, symbol string) (*RiskSc
 	}
 
 	// 计算总体风险评分
-	overallScore := (aiData.MarketRisk + aiData.TechnicalRisk + aiData.FundamentalRisk + 
+	overallScore := (aiData.MarketRisk + aiData.TechnicalRisk + aiData.FundamentalRisk +
 		aiData.VolatilityRisk + aiData.TrendRisk + aiData.VolumeRisk) / 6
 
 	// 确定风险等级
 	riskLevel := a.determineRiskLevel(overallScore)
 
 	score := &RiskScore{
-		Symbol:           symbol,
-		OverallScore:     overallScore,
-		MarketRisk:       aiData.MarketRisk,
-		TechnicalRisk:    aiData.TechnicalRisk,
-		FundamentalRisk:  aiData.FundamentalRisk,
-		VolatilityRisk:   aiData.VolatilityRisk,
-		TrendRisk:        aiData.TrendRisk,
-		VolumeRisk:       aiData.VolumeRisk,
-		AIConfidence:     aiData.AIConfidence,
-		RiskLevel:        riskLevel,
-		Recommendations:  aiData.Recommendations,
-		Timestamp:        time.Now(),
-		ModelVersion:     "deepseek-v1",
+		Symbol:          symbol,
+		OverallScore:    overallScore,
+		MarketRisk:      aiData.MarketRisk,
+		TechnicalRisk:   aiData.TechnicalRisk,
+		FundamentalRisk: aiData.FundamentalRisk,
+		VolatilityRisk:  aiData.VolatilityRisk,
+		TrendRisk:       aiData.TrendRisk,
+		VolumeRisk:      aiData.VolumeRisk,
+		AIConfidence:    aiData.AIConfidence,
+		RiskLevel:       riskLevel,
+		Recommendations: aiData.Recommendations,
+		Timestamp:       time.Now(),
+		ModelVersion:    "deepseek-v1",
 	}
 
 	return score, nil
@@ -249,19 +249,19 @@ func (a *AIRisk) parseRiskScoreResponse(response string, symbol string) (*RiskSc
 // extractRiskInfoFromText 从文本中提取风险信息
 func (a *AIRisk) extractRiskInfoFromText(text string, symbol string) *RiskScore {
 	score := &RiskScore{
-		Symbol:        symbol,
-		OverallScore:  0.5, // 默认中等风险
-		MarketRisk:    0.5,
-		TechnicalRisk: 0.5,
+		Symbol:          symbol,
+		OverallScore:    0.5, // 默认中等风险
+		MarketRisk:      0.5,
+		TechnicalRisk:   0.5,
 		FundamentalRisk: 0.5,
-		VolatilityRisk: 0.5,
-		TrendRisk:     0.5,
-		VolumeRisk:    0.5,
-		AIConfidence:  0.3,
-		RiskLevel:     "medium",
+		VolatilityRisk:  0.5,
+		TrendRisk:       0.5,
+		VolumeRisk:      0.5,
+		AIConfidence:    0.3,
+		RiskLevel:       "medium",
 		Recommendations: []string{"建议谨慎投资"},
-		Timestamp:     time.Now(),
-		ModelVersion:  "text-extraction-v1",
+		Timestamp:       time.Now(),
+		ModelVersion:    "text-extraction-v1",
 	}
 
 	// 简单关键词检测
@@ -327,7 +327,7 @@ func (a *AIRisk) shouldSkipAnalysis() bool {
 // addToHistory 添加到分析历史
 func (a *AIRisk) addToHistory(analysis RiskAnalysis) {
 	a.analysisHistory = append(a.analysisHistory, analysis)
-	
+
 	// 限制历史长度
 	if len(a.analysisHistory) > 1000 {
 		a.analysisHistory = a.analysisHistory[1:]
@@ -337,19 +337,19 @@ func (a *AIRisk) addToHistory(analysis RiskAnalysis) {
 // generateDefaultScore 生成默认风险评分
 func (a *AIRisk) generateDefaultScore(symbol string) *RiskScore {
 	return &RiskScore{
-		Symbol:           symbol,
-		OverallScore:     0.5,
-		MarketRisk:       0.5,
-		TechnicalRisk:    0.5,
-		FundamentalRisk:  0.5,
-		VolatilityRisk:   0.5,
-		TrendRisk:        0.5,
-		VolumeRisk:       0.5,
-		AIConfidence:     0.0,
-		RiskLevel:        "medium",
-		Recommendations:   []string{"未进行AI分析"},
-		Timestamp:        time.Now(),
-		ModelVersion:     "default",
+		Symbol:          symbol,
+		OverallScore:    0.5,
+		MarketRisk:      0.5,
+		TechnicalRisk:   0.5,
+		FundamentalRisk: 0.5,
+		VolatilityRisk:  0.5,
+		TrendRisk:       0.5,
+		VolumeRisk:      0.5,
+		AIConfidence:    0.0,
+		RiskLevel:       "medium",
+		Recommendations: []string{"未进行AI分析"},
+		Timestamp:       time.Now(),
+		ModelVersion:    "default",
 	}
 }
 
@@ -371,7 +371,7 @@ func (a *AIRisk) serializeMarketData(data map[string]interface{}) json.RawMessag
 func (a *AIRisk) triggerRiskAlert(symbol string, score *RiskScore) {
 	// 这里应该调用告警系统
 	// 由于告警系统可能在其他包中，这里只记录日志
-	log.Printf("🚨 AI Risk Alert: %s - Overall Risk: %.3f (%s) - %v", 
+	log.Printf("🚨 AI Risk Alert: %s - Overall Risk: %.3f (%s) - %v",
 		symbol, score.OverallScore, score.RiskLevel, score.Recommendations)
 }
 
@@ -475,10 +475,10 @@ func (a *AIRisk) SetConfig(config AIRiskConfig) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.config = &config
-	
+
 	// 清除过期缓存
 	a.cleanExpiredCache()
-	
+
 	log.Printf("AI risk config updated: enabled=%v, threshold=%.3f", config.Enabled, config.RiskThreshold)
 }
 
@@ -517,33 +517,33 @@ func (a *AIRisk) GetStats() *AIRiskStats {
 	}
 
 	return &AIRiskStats{
-		CachedScores:      len(a.scoreCache),
-		AnalysisHistory:   len(a.analysisHistory),
-		AvgAIConfidence:   avgConfidence,
-		AvgOverallRisk:    avgOverallRisk,
-		LastAnalysis:     a.lastAnalysis,
-		Enabled:          a.config.Enabled,
+		CachedScores:    len(a.scoreCache),
+		AnalysisHistory: len(a.analysisHistory),
+		AvgAIConfidence: avgConfidence,
+		AvgOverallRisk:  avgOverallRisk,
+		LastAnalysis:    a.lastAnalysis,
+		Enabled:         a.config.Enabled,
 	}
 }
 
 // PortfolioAIRiskScore 组合AI风险评分
 type PortfolioAIRiskScore struct {
-	OverallScore  float64 `json:"overall_score"`
-	RiskLevel     string  `json:"risk_level"`
-	TotalValue    float64 `json:"total_value"`
-	HighRiskCount int     `json:"high_risk_count"`
-	Message       string  `json:"message"`
+	OverallScore  float64   `json:"overall_score"`
+	RiskLevel     string    `json:"risk_level"`
+	TotalValue    float64   `json:"total_value"`
+	HighRiskCount int       `json:"high_risk_count"`
+	Message       string    `json:"message"`
 	Timestamp     time.Time `json:"timestamp"`
 }
 
 // AIRiskStats AI风险统计
 type AIRiskStats struct {
-	CachedScores     int           `json:"cached_scores"`
-	AnalysisHistory  int           `json:"analysis_history"`
-	AvgAIConfidence  float64       `json:"avg_ai_confidence"`
-	AvgOverallRisk   float64       `json:"avg_overall_risk"`
-	LastAnalysis     time.Time     `json:"last_analysis"`
-	Enabled          bool          `json:"enabled"`
+	CachedScores    int       `json:"cached_scores"`
+	AnalysisHistory int       `json:"analysis_history"`
+	AvgAIConfidence float64   `json:"avg_ai_confidence"`
+	AvgOverallRisk  float64   `json:"avg_overall_risk"`
+	LastAnalysis    time.Time `json:"last_analysis"`
+	Enabled         bool      `json:"enabled"`
 }
 
 // 工具函数

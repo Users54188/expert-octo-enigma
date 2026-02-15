@@ -16,40 +16,40 @@ type MLStrategy struct {
 	*BaseStrategy
 	modelProvider  ml.ModelProvider
 	features       []string // 特征列表
-	lookbackDays   int     // 回看天数
-	confidence     float64 // 置信度阈值
+	lookbackDays   int      // 回看天数
+	confidence     float64  // 置信度阈值
 	lastPrediction *MLPrediction
 	dataBuffer     []float64 // 价格数据缓存
 }
 
 // MLPrediction ML预测结果
 type MLPrediction struct {
-	Signal     string  `json:"signal"`     // buy, sell, hold
-	Confidence float64 `json:"confidence"` // 置信度 0-1
-	Probability float64 `json:"probability"` // 概率
-	FeatureImportance map[string]float64 `json:"feature_importance"` // 特征重要性
-	Timestamp  time.Time `json:"timestamp"`
-	ModelInfo  map[string]interface{} `json:"model_info"` // 模型信息
+	Signal            string                 `json:"signal"`             // buy, sell, hold
+	Confidence        float64                `json:"confidence"`         // 置信度 0-1
+	Probability       float64                `json:"probability"`        // 概率
+	FeatureImportance map[string]float64     `json:"feature_importance"` // 特征重要性
+	Timestamp         time.Time              `json:"timestamp"`
+	ModelInfo         map[string]interface{} `json:"model_info"` // 模型信息
 }
 
 // NewMLStrategy 创建ML策略
 func NewMLStrategy() Strategy {
 	strategy := &MLStrategy{
-		BaseStrategy:  NewBaseStrategy("ml_strategy", 0.3),
-		features:      make([]string, 0),
-		lookbackDays:  20,
-		confidence:    0.6,
-		dataBuffer:    make([]float64, 0, 100),
+		BaseStrategy:   NewBaseStrategy("ml_strategy", 0.3),
+		features:       make([]string, 0),
+		lookbackDays:   20,
+		confidence:     0.6,
+		dataBuffer:     make([]float64, 0, 100),
 		lastPrediction: nil,
 	}
 
 	// 设置默认参数
 	strategy.parameters = map[string]interface{}{
-		"lookback_days":      20,
-		"confidence":         0.6,
-		"features":            []string{"price", "volume", "ma5", "ma10", "rsi"},
-		"update_frequency":   "1h", // 模型更新频率
-		"use_real_time":      true, // 使用实时数据
+		"lookback_days":    20,
+		"confidence":       0.6,
+		"features":         []string{"price", "volume", "ma5", "ma10", "rsi"},
+		"update_frequency": "1h", // 模型更新频率
+		"use_real_time":    true, // 使用实时数据
 	}
 
 	return strategy
@@ -89,7 +89,7 @@ func (m *MLStrategy) Init(ctx context.Context, symbol string, config map[string]
 		return fmt.Errorf("confidence must be between 0 and 1")
 	}
 
-	log.Printf("ML strategy initialized: lookback=%d, confidence=%.2f, features=%v", 
+	log.Printf("ML strategy initialized: lookback=%d, confidence=%.2f, features=%v",
 		m.lookbackDays, m.confidence, m.features)
 	return nil
 }
@@ -149,12 +149,12 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 	case "buy":
 		signalType = "buy"
 		strength = prediction.Confidence
-		reason = fmt.Sprintf("ML Buy Signal: confidence=%.2f, probability=%.2f", 
+		reason = fmt.Sprintf("ML Buy Signal: confidence=%.2f, probability=%.2f",
 			prediction.Confidence, prediction.Probability)
 	case "sell":
 		signalType = "sell"
 		strength = prediction.Confidence
-		reason = fmt.Sprintf("ML Sell Signal: confidence=%.2f, probability=%.2f", 
+		reason = fmt.Sprintf("ML Sell Signal: confidence=%.2f, probability=%.2f",
 			prediction.Confidence, prediction.Probability)
 	default:
 		return nil, nil // hold信号不执行
@@ -173,7 +173,7 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 		signal.Metadata["ml_feature_importance"] = prediction.FeatureImportance
 	}
 
-	log.Printf("ML strategy generated signal: %s %s (confidence: %.3f)", 
+	log.Printf("ML strategy generated signal: %s %s (confidence: %.3f)",
 		marketData.Symbol, signalType, prediction.Confidence)
 
 	return signal, nil
@@ -238,9 +238,9 @@ func (m *MLStrategy) performMLPrediction(ctx context.Context, features map[strin
 // parsePredictionResult 解析预测结果
 func (m *MLStrategy) parsePredictionResult(result interface{}) (*MLPrediction, error) {
 	prediction := &MLPrediction{
-		Timestamp:        time.Now(),
+		Timestamp:         time.Now(),
 		FeatureImportance: make(map[string]float64),
-		ModelInfo:        make(map[string]interface{}),
+		ModelInfo:         make(map[string]interface{}),
 	}
 
 	// 如果结果是JSON字符串，尝试解析
@@ -428,7 +428,7 @@ func (m *MLStrategy) calculateStopLoss(currentPrice float64, signalType string, 
 
 // OnTrade 交易回调
 func (m *MLStrategy) OnTrade(ctx context.Context, trade *trading.TradeRecord) error {
-	log.Printf("ML strategy trade executed: %s %d shares at %.2f", 
+	log.Printf("ML strategy trade executed: %s %d shares at %.2f",
 		trade.Symbol, trade.Quantity, trade.Price)
 	return nil
 }

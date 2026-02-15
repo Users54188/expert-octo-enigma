@@ -15,22 +15,22 @@ import (
 type SignalCombination string
 
 const (
-	VoteCombination    SignalCombination = "vote"     // 投票法
+	VoteCombination     SignalCombination = "vote"     // 投票法
 	WeightedCombination SignalCombination = "weighted" // 加权法
 	PriorityCombination SignalCombination = "priority" // 优先级法
 )
 
 // StrategyManager 策略管理器
 type StrategyManager struct {
-	loader         *StrategyLoader
-	combination    SignalCombination
-	mu             sync.RWMutex
-	riskManager    *trading.RiskManager
+	loader          *StrategyLoader
+	combination     SignalCombination
+	mu              sync.RWMutex
+	riskManager     *trading.RiskManager
 	positionManager *trading.PositionManager
-	orderExecutor  *trading.OrderExecutor
-	signalHandler  *trading.SignalHandler
-	lastExecution  time.Time
-	executionCount int64
+	orderExecutor   *trading.OrderExecutor
+	signalHandler   *trading.SignalHandler
+	lastExecution   time.Time
+	executionCount  int64
 }
 
 // NewStrategyManager 创建策略管理器
@@ -125,11 +125,11 @@ func (m *StrategyManager) ExecuteStrategies(ctx context.Context, marketData *Mar
 	}
 
 	return &StrategyExecutionResult{
-		Timestamp:    startTime,
-		Duration:     time.Since(startTime).Milliseconds(),
-		Signals:      combinedSignals,
+		Timestamp:     startTime,
+		Duration:      time.Since(startTime).Milliseconds(),
+		Signals:       combinedSignals,
 		StrategyCount: len(enabledStrategies),
-		Errors:       errors,
+		Errors:        errors,
 	}, nil
 }
 
@@ -317,9 +317,9 @@ func (m *StrategyManager) combineByWeight(signalsBySymbol map[string][]*Signal, 
 func (m *StrategyManager) combineByPriority(signalsBySymbol map[string][]*Signal, marketData *MarketData) []*Signal {
 	// 收集所有信号，包含优先级信息
 	type PrioritySignal struct {
-		Signal    *Signal
-		Priority  int
-		Weight    float64
+		Signal   *Signal
+		Priority int
+		Weight   float64
 	}
 
 	var prioritySignals []PrioritySignal
@@ -393,12 +393,12 @@ func (m *StrategyManager) GetCombinationMethod() SignalCombination {
 
 // StrategyExecutionResult 策略执行结果
 type StrategyExecutionResult struct {
-	Timestamp     time.Time     `json:"timestamp"`
-	Duration      int64         `json:"duration"`      // 执行时间(毫秒)
-	Signals       []*Signal     `json:"signals"`      // 合并后的信号
-	StrategyCount int           `json:"strategy_count"` // 策略数量
-	Errors        []error       `json:"errors"`       // 执行错误
-	Error         error         `json:"error"`        // 整体错误
+	Timestamp     time.Time `json:"timestamp"`
+	Duration      int64     `json:"duration"`       // 执行时间(毫秒)
+	Signals       []*Signal `json:"signals"`        // 合并后的信号
+	StrategyCount int       `json:"strategy_count"` // 策略数量
+	Errors        []error   `json:"errors"`         // 执行错误
+	Error         error     `json:"error"`          // 整体错误
 }
 
 // HasErrors 检查是否有错误

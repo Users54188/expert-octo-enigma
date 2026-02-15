@@ -34,9 +34,9 @@ func TestMain(m *testing.M) {
 	// Setup
 	dbPath := "./test.db"
 	db.InitDB(dbPath)
-	
+
 	code := m.Run()
-	
+
 	// Teardown
 	os.Remove(dbPath)
 	os.Exit(code)

@@ -13,20 +13,20 @@ import (
 
 // Scheduler 策略调度器
 type Scheduler struct {
-	mu              sync.RWMutex
-	running         bool
-	interval        time.Duration
-	cronExpr        string
-	enabled         bool
-	lastExecution   time.Time
-	executionCount  int64
-	strategyManager  *strategies.StrategyManager
-	marketProvider  *market.MarketProvider
-	symbols         []string
+	mu                 sync.RWMutex
+	running            bool
+	interval           time.Duration
+	cronExpr           string
+	enabled            bool
+	lastExecution      time.Time
+	executionCount     int64
+	strategyManager    *strategies.StrategyManager
+	marketProvider     *market.MarketProvider
+	symbols            []string
 	currentSymbolIndex int
-	ticker          *time.Ticker
-	ctx             context.Context
-	cancel          context.CancelFunc
+	ticker             *time.Ticker
+	ctx                context.Context
+	cancel             context.CancelFunc
 }
 
 // NewScheduler 创建调度器
@@ -39,11 +39,11 @@ func NewScheduler(interval string) (*Scheduler, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Scheduler{
-		interval:          duration,
-		enabled:           true,
-		ctx:               ctx,
-		cancel:            cancel,
-		symbols:           make([]string, 0),
+		interval:           duration,
+		enabled:            true,
+		ctx:                ctx,
+		cancel:             cancel,
+		symbols:            make([]string, 0),
 		currentSymbolIndex: 0,
 	}, nil
 }
@@ -154,14 +154,14 @@ func (s *Scheduler) GetStats() map[string]interface{} {
 	defer s.mu.RUnlock()
 
 	return map[string]interface{}{
-		"running":           s.running,
-		"enabled":           s.enabled,
-		"interval":          s.interval.String(),
-		"last_execution":    s.lastExecution,
-		"execution_count":   s.executionCount,
-		"symbols_count":     len(s.symbols),
-		"current_symbol":    s.getCurrentSymbol(),
-		"cron_expression":   s.cronExpr,
+		"running":         s.running,
+		"enabled":         s.enabled,
+		"interval":        s.interval.String(),
+		"last_execution":  s.lastExecution,
+		"execution_count": s.executionCount,
+		"symbols_count":   len(s.symbols),
+		"current_symbol":  s.getCurrentSymbol(),
+		"cron_expression": s.cronExpr,
 	}
 }
 
@@ -264,17 +264,17 @@ func (s *Scheduler) getMarketData(ctx context.Context, symbol string) (*strategi
 func (s *Scheduler) mockMarketData(symbol string) *strategies.MarketData {
 	// 模拟市场数据生成
 	return &strategies.MarketData{
-		Symbol:         symbol,
-		Open:           10.0,
-		High:           10.5,
-		Low:            9.8,
-		Close:          10.2,
-		Volume:         1000000,
-		Amount:         10000000.0,
-		Timestamp:      time.Now(),
-		PreClose:       10.0,
-		Change:         0.2,
-		ChangePercent:  2.0,
+		Symbol:        symbol,
+		Open:          10.0,
+		High:          10.5,
+		Low:           9.8,
+		Close:         10.2,
+		Volume:        1000000,
+		Amount:        10000000.0,
+		Timestamp:     time.Now(),
+		PreClose:      10.0,
+		Change:        0.2,
+		ChangePercent: 2.0,
 	}
 }
 
@@ -300,7 +300,7 @@ func (s *Scheduler) processStrategyResult(ctx context.Context, symbol string, re
 	}
 
 	// 记录执行结果
-	log.Printf("Strategy execution result for %s: %d signals, %d errors", 
+	log.Printf("Strategy execution result for %s: %d signals, %d errors",
 		symbol, len(result.Signals), len(result.Errors))
 
 	// 处理错误
@@ -311,7 +311,7 @@ func (s *Scheduler) processStrategyResult(ctx context.Context, symbol string, re
 	// 处理信号
 	if len(result.Signals) > 0 {
 		log.Printf("Processing %d signals for %s", len(result.Signals), symbol)
-		
+
 		// 将信号发送给策略管理器处理
 		if err := s.strategyManager.ProcessSignals(ctx, result.Signals); err != nil {
 			return fmt.Errorf("failed to process signals: %v", err)
@@ -382,7 +382,7 @@ func (s *Scheduler) SetInterval(interval string) error {
 	defer s.mu.Unlock()
 
 	s.interval = duration
-	
+
 	// 如果正在运行，重新启动ticker
 	if s.running && s.ticker != nil {
 		s.ticker.Stop()

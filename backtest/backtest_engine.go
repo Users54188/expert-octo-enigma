@@ -12,182 +12,182 @@ import (
 
 // BacktestEngine 回测引擎
 type BacktestEngine struct {
-	mu           sync.RWMutex
-	config       *BacktestConfig
-	strategies   map[string]strategies.Strategy
-	results      *BacktestResults
-	started      bool
-	completed    bool
-	startTime    time.Time
-	endTime      time.Time
-	progress     float64
+	mu         sync.RWMutex
+	config     *BacktestConfig
+	strategies map[string]strategies.Strategy
+	results    *BacktestResults
+	started    bool
+	completed  bool
+	startTime  time.Time
+	endTime    time.Time
+	progress   float64
 }
 
 // BacktestConfig 回测配置
 type BacktestConfig struct {
-	StartDate        time.Time         `yaml:"start_date"`
-	EndDate          time.Time         `yaml:"end_date"`
+	StartDate        time.Time        `yaml:"start_date"`
+	EndDate          time.Time        `yaml:"end_date"`
 	InitialCapital   float64          `yaml:"initial_capital"`
-	Commission       float64          `yaml:"commission"`        // 手续费率
-	Slippage         float64          `yaml:"slippage"`          // 滑点
-	Symbols          []string         `yaml:"symbols"`           // 回测股票
+	Commission       float64          `yaml:"commission"`         // 手续费率
+	Slippage         float64          `yaml:"slippage"`           // 滑点
+	Symbols          []string         `yaml:"symbols"`            // 回测股票
 	Strategies       []StrategyConfig `yaml:"strategies"`         // 策略配置
 	RiskFreeRate     float64          `yaml:"risk_free_rate"`     // 无风险利率
-	BenchmarkSymbol  string           `yaml:"benchmark_symbol"`  // 基准股票
+	BenchmarkSymbol  string           `yaml:"benchmark_symbol"`   // 基准股票
 	MaxDrawdownLimit float64          `yaml:"max_drawdown_limit"` // 最大回撤限制
 	Realtime         bool             `yaml:"realtime"`           // 实时模式
 }
 
 // StrategyConfig 策略配置
 type StrategyConfig struct {
-	Name      string                 `yaml:"name"`
-	Type      strategies.StrategyType `yaml:"type"`
-	Enabled   bool                   `yaml:"enabled"`
-	Weight    float64                `yaml:"weight"`
-	Parameters map[string]interface{} `yaml:"parameters"`
+	Name       string                  `yaml:"name"`
+	Type       strategies.StrategyType `yaml:"type"`
+	Enabled    bool                    `yaml:"enabled"`
+	Weight     float64                 `yaml:"weight"`
+	Parameters map[string]interface{}  `yaml:"parameters"`
 }
 
 // BacktestResults 回测结果
 type BacktestResults struct {
-	Summary       *BacktestSummary        `json:"summary"`       // 回测摘要
-	EquityCurve   []EquityPoint           `json:"equity_curve"` // 收益曲线
-	Trades        []BacktestTrade         `json:"trades"`       // 交易记录
-	Returns       []ReturnPoint           `json:"returns"`      // 收益率序列
-	Drawdowns     []DrawdownPoint         `json:"drawdowns"`    // 回撤序列
-	MonthlyReturns map[string]float64     `json:"monthly_returns"` // 月度收益
-	StrategyStats map[string]*StrategyPerformance `json:"strategy_stats"` // 策略统计
-	Benchmark     *BenchmarkComparison    `json:"benchmark"`    // 基准比较
-	RiskMetrics   *RiskMetrics           `json:"risk_metrics"` // 风险指标
-	Exposures     map[string][]ExposurePoint `json:"exposures"` // 暴露情况
-	Errors        []string               `json:"errors"`       // 错误信息
-	StartTime     time.Time              `json:"start_time"`
-	EndTime       time.Time              `json:"end_time"`
-	Duration      time.Duration          `json:"duration"`
+	Summary        *BacktestSummary                `json:"summary"`         // 回测摘要
+	EquityCurve    []EquityPoint                   `json:"equity_curve"`    // 收益曲线
+	Trades         []BacktestTrade                 `json:"trades"`          // 交易记录
+	Returns        []ReturnPoint                   `json:"returns"`         // 收益率序列
+	Drawdowns      []DrawdownPoint                 `json:"drawdowns"`       // 回撤序列
+	MonthlyReturns map[string]float64              `json:"monthly_returns"` // 月度收益
+	StrategyStats  map[string]*StrategyPerformance `json:"strategy_stats"`  // 策略统计
+	Benchmark      *BenchmarkComparison            `json:"benchmark"`       // 基准比较
+	RiskMetrics    *RiskMetrics                    `json:"risk_metrics"`    // 风险指标
+	Exposures      map[string][]ExposurePoint      `json:"exposures"`       // 暴露情况
+	Errors         []string                        `json:"errors"`          // 错误信息
+	StartTime      time.Time                       `json:"start_time"`
+	EndTime        time.Time                       `json:"end_time"`
+	Duration       time.Duration                   `json:"duration"`
 }
 
 // BacktestSummary 回测摘要
 type BacktestSummary struct {
-	InitialCapital    float64   `json:"initial_capital"`
-	FinalValue       float64   `json:"final_value"`
-	TotalReturn      float64   `json:"total_return"`
-	AnnualizedReturn float64   `json:"annualized_return"`
-	TotalTrades      int       `json:"total_trades"`
-	WinningTrades    int       `json:"winning_trades"`
-	LosingTrades     int       `json:"losing_trades"`
-	WinRate          float64   `json:"win_rate"`
-	ProfitFactor     float64   `json:"profit_factor"`
-	SharpeRatio      float64   `json:"sharpe_ratio"`
-	MaxDrawdown      float64   `json:"max_drawdown"`
+	InitialCapital      float64       `json:"initial_capital"`
+	FinalValue          float64       `json:"final_value"`
+	TotalReturn         float64       `json:"total_return"`
+	AnnualizedReturn    float64       `json:"annualized_return"`
+	TotalTrades         int           `json:"total_trades"`
+	WinningTrades       int           `json:"winning_trades"`
+	LosingTrades        int           `json:"losing_trades"`
+	WinRate             float64       `json:"win_rate"`
+	ProfitFactor        float64       `json:"profit_factor"`
+	SharpeRatio         float64       `json:"sharpe_ratio"`
+	MaxDrawdown         float64       `json:"max_drawdown"`
 	MaxDrawdownDuration time.Duration `json:"max_drawdown_duration"`
-	CalmarRatio      float64   `json:"calmar_ratio"`
-	SortinoRatio     float64   `json:"sortino_ratio"`
-	InformationRatio float64   `json:"information_ratio"`
-	TrackingError    float64   `json:"tracking_error"`
-	ValueAtRisk      float64   `json:"value_at_risk"`
-	ConditionalVaR   float64   `json:"conditional_var"`
-	AverageTrade     float64   `json:"average_trade"`
-	LargestWin       float64   `json:"largest_win"`
-	LargestLoss      float64   `json:"largest_loss"`
-	AverageWin       float64   `json:"average_win"`
-	AverageLoss      float64   `json:"average_loss"`
-	Commissions      float64   `json:"commissions"`
-	Slippage         float64   `json:"slippage"`
-	Alpha            float64   `json:"alpha"`
-	Beta             float64   `json:"beta"`
-	Correlation      float64   `json:"correlation"`
+	CalmarRatio         float64       `json:"calmar_ratio"`
+	SortinoRatio        float64       `json:"sortino_ratio"`
+	InformationRatio    float64       `json:"information_ratio"`
+	TrackingError       float64       `json:"tracking_error"`
+	ValueAtRisk         float64       `json:"value_at_risk"`
+	ConditionalVaR      float64       `json:"conditional_var"`
+	AverageTrade        float64       `json:"average_trade"`
+	LargestWin          float64       `json:"largest_win"`
+	LargestLoss         float64       `json:"largest_loss"`
+	AverageWin          float64       `json:"average_win"`
+	AverageLoss         float64       `json:"average_loss"`
+	Commissions         float64       `json:"commissions"`
+	Slippage            float64       `json:"slippage"`
+	Alpha               float64       `json:"alpha"`
+	Beta                float64       `json:"beta"`
+	Correlation         float64       `json:"correlation"`
 }
 
 // EquityPoint 权益点
 type EquityPoint struct {
 	Timestamp time.Time `json:"timestamp"`
-	Value    float64   `json:"value"`
-	Drawdown float64   `json:"drawdown"`
+	Value     float64   `json:"value"`
+	Drawdown  float64   `json:"drawdown"`
 }
 
 // BacktestTrade 回测交易
 type BacktestTrade struct {
-	ID           string    `json:"id"`
-	Symbol       string    `json:"symbol"`
-	EntryTime    time.Time `json:"entry_time"`
-	EntryPrice   float64   `json:"entry_price"`
-	ExitTime     time.Time `json:"exit_time"`
-	ExitPrice    float64   `json:"exit_price"`
-	Quantity     int64     `json:"quantity"`
-	Side         string    `json:"side"` // buy, sell
-	PnL          float64   `json:"pnl"`
-	Return       float64   `json:"return"`
-	Strategy     string    `json:"strategy"`
-	Commission   float64   `json:"commission"`
-	Slippage     float64   `json:"slippage"`
+	ID           string        `json:"id"`
+	Symbol       string        `json:"symbol"`
+	EntryTime    time.Time     `json:"entry_time"`
+	EntryPrice   float64       `json:"entry_price"`
+	ExitTime     time.Time     `json:"exit_time"`
+	ExitPrice    float64       `json:"exit_price"`
+	Quantity     int64         `json:"quantity"`
+	Side         string        `json:"side"` // buy, sell
+	PnL          float64       `json:"pnl"`
+	Return       float64       `json:"return"`
+	Strategy     string        `json:"strategy"`
+	Commission   float64       `json:"commission"`
+	Slippage     float64       `json:"slippage"`
 	HoldDuration time.Duration `json:"hold_duration"`
 }
 
 // ReturnPoint 收益率点
 type ReturnPoint struct {
 	Timestamp time.Time `json:"timestamp"`
-	Value    float64   `json:"value"`
-	Return   float64   `json:"return"`
+	Value     float64   `json:"value"`
+	Return    float64   `json:"return"`
 }
 
 // DrawdownPoint 回撤点
 type DrawdownPoint struct {
-	Start      time.Time `json:"start"`
-	End        time.Time `json:"end"`
-	Peak       float64   `json:"peak"`
-	Trough     float64   `json:"trough"`
-	Duration   time.Duration `json:"duration"`
-	Recovery   time.Duration `json:"recovery"`
+	Start    time.Time     `json:"start"`
+	End      time.Time     `json:"end"`
+	Peak     float64       `json:"peak"`
+	Trough   float64       `json:"trough"`
+	Duration time.Duration `json:"duration"`
+	Recovery time.Duration `json:"recovery"`
 }
 
 // StrategyPerformance 策略表现
 type StrategyPerformance struct {
-	Name         string    `json:"name"`
-	TotalReturn  float64   `json:"total_return"`
-	WinRate      float64   `json:"win_rate"`
-	SharpeRatio  float64   `json:"sharpe_ratio"`
-	MaxDrawdown  float64   `json:"max_drawdown"`
-	TradesCount  int       `json:"trades_count"`
-	AvgReturn    float64   `json:"avg_return"`
+	Name        string  `json:"name"`
+	TotalReturn float64 `json:"total_return"`
+	WinRate     float64 `json:"win_rate"`
+	SharpeRatio float64 `json:"sharpe_ratio"`
+	MaxDrawdown float64 `json:"max_drawdown"`
+	TradesCount int     `json:"trades_count"`
+	AvgReturn   float64 `json:"avg_return"`
 }
 
 // BenchmarkComparison 基准比较
 type BenchmarkComparison struct {
-	Symbol           string   `json:"symbol"`
-	TotalReturn      float64  `json:"total_return"`
-	AnnualizedReturn float64  `json:"annualized_return"`
-	SharpeRatio      float64  `json:"sharpe_ratio"`
-	MaxDrawdown      float64  `json:"max_drawdown"`
-	Correlation      float64  `json:"correlation"`
-	Alpha            float64  `json:"alpha"`
-	Beta             float64  `json:"beta"`
+	Symbol           string  `json:"symbol"`
+	TotalReturn      float64 `json:"total_return"`
+	AnnualizedReturn float64 `json:"annualized_return"`
+	SharpeRatio      float64 `json:"sharpe_ratio"`
+	MaxDrawdown      float64 `json:"max_drawdown"`
+	Correlation      float64 `json:"correlation"`
+	Alpha            float64 `json:"alpha"`
+	Beta             float64 `json:"beta"`
 }
 
 // RiskMetrics 风险指标
 type RiskMetrics struct {
-	Volatility        float64   `json:"volatility"`
-	DownsideDeviation float64   `json:"downside_deviation"`
-	Skewness         float64   `json:"skewness"`
-	Kurtosis         float64   `json:"kurtosis"`
-	VaR95            float64   `json:"var_95"`
-	CVaR95           float64   `json:"cvar_95"`
-	VaR99            float64   `json:"var_99"`
-	CVaR99           float64   `json:"cvar_99"`
+	Volatility        float64 `json:"volatility"`
+	DownsideDeviation float64 `json:"downside_deviation"`
+	Skewness          float64 `json:"skewness"`
+	Kurtosis          float64 `json:"kurtosis"`
+	VaR95             float64 `json:"var_95"`
+	CVaR95            float64 `json:"cvar_95"`
+	VaR99             float64 `json:"var_99"`
+	CVaR99            float64 `json:"cvar_99"`
 }
 
 // ExposurePoint 暴露点
 type ExposurePoint struct {
-	Timestamp time.Time         `json:"timestamp"`
+	Timestamp time.Time          `json:"timestamp"`
 	Exposures map[string]float64 `json:"exposures"`
 }
 
 // NewBacktestEngine 创建回测引擎
 func NewBacktestEngine(config BacktestConfig) *BacktestEngine {
 	return &BacktestEngine{
-		config:    &config,
+		config:     &config,
 		strategies: make(map[string]strategies.Strategy),
-		results:   &BacktestResults{},
-		started:   false,
-		completed: false,
+		results:    &BacktestResults{},
+		started:    false,
+		completed:  false,
 	}
 }
 
@@ -257,14 +257,14 @@ func (b *BacktestEngine) initializeResults() error {
 		Summary: &BacktestSummary{
 			InitialCapital: b.config.InitialCapital,
 		},
-		EquityCurve:   make([]EquityPoint, 0),
-		Trades:        make([]BacktestTrade, 0),
-		Returns:       make([]ReturnPoint, 0),
-		Drawdowns:     make([]DrawdownPoint, 0),
+		EquityCurve:    make([]EquityPoint, 0),
+		Trades:         make([]BacktestTrade, 0),
+		Returns:        make([]ReturnPoint, 0),
+		Drawdowns:      make([]DrawdownPoint, 0),
 		MonthlyReturns: make(map[string]float64),
-		StrategyStats: make(map[string]*StrategyPerformance),
-		Exposures:     make(map[string][]ExposurePoint),
-		StartTime:     b.startTime,
+		StrategyStats:  make(map[string]*StrategyPerformance),
+		Exposures:      make(map[string][]ExposurePoint),
+		StartTime:      b.startTime,
 	}
 
 	// 初始化策略统计
@@ -281,7 +281,7 @@ func (b *BacktestEngine) initializeResults() error {
 func (b *BacktestEngine) runBacktestLoop(ctx context.Context) error {
 	// 模拟回测数据生成
 	// 实际应用中需要加载真实的历史数据
-	
+
 	currentDate := b.config.StartDate
 	currentValue := b.config.InitialCapital
 	peakValue := currentValue
@@ -398,19 +398,19 @@ func (b *BacktestEngine) generateMockMarketData(date time.Time) map[string]*stra
 		// 简化的模拟数据生成
 		// 实际应用中应该从数据源获取真实历史数据
 		basePrice := 10.0 + float64(len(symbol)) // 基于股票代码生成基础价格
-		
+
 		// 添加随机波动
 		dayOfYear := date.YearDay()
 		volatility := 0.02 // 2%日波动率
-		
+
 		priceChange := basePrice * volatility * (float64(dayOfYear%100) - 50) / 50
 		open := basePrice + priceChange
-		high := open * (1 + volatility * 0.5)
-		low := open * (1 - volatility * 0.5)
-		close := open + priceChange * 0.5
+		high := open * (1 + volatility*0.5)
+		low := open * (1 - volatility*0.5)
+		close := open + priceChange*0.5
 
 		marketData[symbol] = &strategies.MarketData{
-			Symbol:         symbol,
+			Symbol:        symbol,
 			Open:          open,
 			High:          high,
 			Low:           low,
@@ -439,7 +439,7 @@ func (b *BacktestEngine) createBacktestTrade(tradeID int, signal *strategies.Sig
 	price := signal.Price
 	commission := price * float64(quantity) * b.config.Commission
 	slippage := price * float64(quantity) * b.config.Slippage
-	
+
 	// 模拟PnL（简化）
 	var pnl float64
 	if signal.SignalType == "buy" {
@@ -497,7 +497,7 @@ func (b *BacktestEngine) calculateFinalMetrics() {
 
 	b.results.Summary.WinningTrades = winningTrades
 	b.results.Summary.LosingTrades = b.results.Summary.TotalTrades - winningTrades
-	
+
 	if b.results.Summary.TotalTrades > 0 {
 		b.results.Summary.WinRate = float64(winningTrades) / float64(b.results.Summary.TotalTrades)
 	}
@@ -542,7 +542,7 @@ func (b *BacktestEngine) calculateMaxDrawdown() {
 		if point.Value > peak {
 			peak = point.Value
 			peakTime = point.Timestamp
-			
+
 			// 如果之前有回撤，结束它
 			if currentDrawdownStart.Before(peakTime) && peak > 0 {
 				duration := peakTime.Sub(currentDrawdownStart)

@@ -12,28 +12,28 @@ import (
 
 // PortfolioRisk 组合风险暴露管理
 type PortfolioRisk struct {
-	mu            sync.RWMutex
-	config        *PortfolioRiskConfig
-	positionManager *trading.PositionManager
+	mu               sync.RWMutex
+	config           *PortfolioRiskConfig
+	positionManager  *trading.PositionManager
 	industryExposure map[string]float64 // 行业暴露
 	sectorExposure   map[string]float64 // 板块暴露
 	symbolExposure   map[string]float64 // 个股暴露
-	lastUpdate      time.Time
+	lastUpdate       time.Time
 }
 
 // PortfolioRiskConfig 组合风险配置
 type PortfolioRiskConfig struct {
 	MaxIndustryExposure float64 `yaml:"max_industry_exposure"` // 单一行业最大暴露比例
-	MaxSectorExposure  float64 `yaml:"max_sector_exposure"`  // 单一板块最大暴露比例
-	MaxSymbolExposure  float64 `yaml:"max_symbol_exposure"`  // 单一股票最大暴露比例
-	ConcentrationAlert float64 `yaml:"concentration_alert"`  // 集中度告警阈值
+	MaxSectorExposure   float64 `yaml:"max_sector_exposure"`   // 单一板块最大暴露比例
+	MaxSymbolExposure   float64 `yaml:"max_symbol_exposure"`   // 单一股票最大暴露比例
+	ConcentrationAlert  float64 `yaml:"concentration_alert"`   // 集中度告警阈值
 }
 
 // NewPortfolioRisk 创建组合风险管理器
 func NewPortfolioRisk(config PortfolioRiskConfig, positionManager *trading.PositionManager) *PortfolioRisk {
 	return &PortfolioRisk{
-		config:         &config,
-		positionManager: positionManager,
+		config:           &config,
+		positionManager:  positionManager,
 		industryExposure: make(map[string]float64),
 		sectorExposure:   make(map[string]float64),
 		symbolExposure:   make(map[string]float64),
@@ -45,11 +45,12 @@ func (p *PortfolioRisk) CheckExposure(ctx context.Context) (*ExposureReport, err
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	// 获取当前持仓
-	positions, err := p.positionManager.GetAllPositions(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get positions: %v", err)
+	if p.positionManager == nil {
+		return nil, fmt.Errorf("position manager not configured")
 	}
+
+	// 获取当前持仓
+	positions := p.positionManager.GetAllPositions()
 
 	// 计算总资产
 	totalValue := 0.0
@@ -59,7 +60,7 @@ func (p *PortfolioRisk) CheckExposure(ctx context.Context) (*ExposureReport, err
 
 	if totalValue == 0 {
 		return &ExposureReport{
-			TotalValue:      0,
+			TotalValue:       0,
 			IndustryExposure: p.industryExposure,
 			SectorExposure:   p.sectorExposure,
 			SymbolExposure:   p.symbolExposure,
@@ -72,12 +73,12 @@ func (p *PortfolioRisk) CheckExposure(ctx context.Context) (*ExposureReport, err
 
 	// 生成报告
 	report := &ExposureReport{
-		TotalValue:      totalValue,
+		TotalValue:       totalValue,
 		IndustryExposure: make(map[string]float64),
 		SectorExposure:   make(map[string]float64),
 		SymbolExposure:   make(map[string]float64),
-		Alerts:          make([]ExposureAlert, 0),
-		Timestamp:       p.lastUpdate,
+		Alerts:           make([]ExposureAlert, 0),
+		Timestamp:        p.lastUpdate,
 	}
 
 	// 复制数据
@@ -98,7 +99,7 @@ func (p *PortfolioRisk) CheckExposure(ctx context.Context) (*ExposureReport, err
 }
 
 // updateExposure 更新暴露数据
-func (p *PortfolioRisk) updateExposure(positions []trading.Position, totalValue float64) {
+func (p *PortfolioRisk) updateExposure(positions []*trading.PositionState, totalValue float64) {
 	// 重置暴露数据
 	p.industryExposure = make(map[string]float64)
 	p.sectorExposure = make(map[string]float64)
@@ -244,18 +245,18 @@ func (p *PortfolioRisk) SetConfig(config PortfolioRiskConfig) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.config = &config
-	log.Printf("Portfolio risk config updated: max_industry=%.2f, max_symbol=%.2f", 
+	log.Printf("Portfolio risk config updated: max_industry=%.2f, max_symbol=%.2f",
 		config.MaxIndustryExposure, config.MaxSymbolExposure)
 }
 
 // ExposureReport 暴露报告
 type ExposureReport struct {
-	TotalValue      float64                    `json:"total_value"`
-	IndustryExposure map[string]float64        `json:"industry_exposure"`
-	SectorExposure  map[string]float64        `json:"sector_exposure"`
-	SymbolExposure  map[string]float64        `json:"symbol_exposure"`
-	Alerts          []ExposureAlert           `json:"alerts"`
-	Timestamp       time.Time                `json:"timestamp"`
+	TotalValue       float64            `json:"total_value"`
+	IndustryExposure map[string]float64 `json:"industry_exposure"`
+	SectorExposure   map[string]float64 `json:"sector_exposure"`
+	SymbolExposure   map[string]float64 `json:"symbol_exposure"`
+	Alerts           []ExposureAlert    `json:"alerts"`
+	Timestamp        time.Time          `json:"timestamp"`
 }
 
 // ExposureAlert 暴露告警
