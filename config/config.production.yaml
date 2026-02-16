@@ -1,0 +1,374 @@
+# CloudQuantBot 生产环境配置文件
+# 适用于6c8g生产环境
+
+app:
+  name: "CloudQuantBot"
+  version: "1.0.0"
+  mode: "production"
+  debug: false
+
+# HTTP服务器配置
+server:
+  http:
+    port: 8080
+    timeout: 30s
+    max_body_size: 10MB
+    cors:
+      enabled: true
+      origins: ["*"]
+
+  websocket:
+    enabled: true
+    max_connections: 100
+    message_buffer: 256
+    heartbeat: 30s
+
+# 数据库配置 - SQLite优化
+database:
+  driver: "sqlite3"
+  dsn: "./data/quant.db?_journal_mode=WAL&_busy_timeout=5000&_cache_size=10000&_synchronous=NORMAL"
+  max_open_conns: 10
+  max_idle_conns: 5
+  conn_max_lifetime: 1h
+
+# 缓存配置
+cache:
+  type: "lru"
+  size: 10000
+  ttl: 5m
+
+# 日志配置
+log:
+  level: "warn"
+  format: "json"
+  output: "file"
+  file:
+    path: "/var/log/cloudquant/cloudquant.log"
+    max_size: 100      # MB
+    max_age: 30         # days
+    max_backups: 10
+    compress: true
+  console:
+    enabled: false
+
+# 监控的股票列表
+symbols:
+  - sh600000
+  - sh601398
+  - sh600519
+  - sh600036
+  - sh000001
+  - sz399001
+
+# 市场数据源配置
+market:
+  data_source:
+    primary: "sina"
+    fallback: ["eastmoney", "tencent"]
+    mock_on_failure: false
+    failover_timeout: 5s
+    health_check_interval: 30s
+
+  providers:
+    sina:
+      enabled: true
+      priority: 1
+      timeout: 10s
+      rate_limit: 100
+      base_url: "https://hq.sinajs.cn"
+    eastmoney:
+      enabled: true
+      priority: 2
+      timeout: 10s
+      rate_limit: 100
+      base_url: "https://push2.eastmoney.com/api"
+    tencent:
+      enabled: true
+      priority: 3
+      timeout: 10s
+      rate_limit: 100
+      base_url: "https://qt.gtimg.cn"
+
+  anomaly_detection:
+    enabled: true
+    price_jump_threshold: 0.05
+    volume_spike_factor: 3.0
+    latency_threshold: 5s
+    stale_data_threshold: 60s
+    spread_threshold: 0.02
+
+# 行业数据配置
+industry:
+  data_file: "./data/industries.json"
+  cache_enabled: true
+  cache_ttl: 24h
+  benchmark: "csi300"
+
+# 风险模型配置
+risk:
+  enabled: true
+  var_confidence: 0.95
+  var_method: "historical"
+  lookback_days: 252
+
+  metrics:
+    - sharpe
+    - sortino
+    - calmar
+    - var
+    - cvar
+    - max_drawdown
+    - volatility
+    - beta
+    - alpha
+
+  attribution:
+    enabled: true
+    benchmark: "csi300"
+    frequency: "daily"
+
+  limits:
+    max_single_position: 0.3
+    max_positions: 10
+    max_daily_loss: 0.1
+    max_drawdown: 0.2
+
+# 可视化与回放配置
+visualization:
+  websocket:
+    enabled: true
+    channels:
+      - market
+      - position
+      - signal
+      - performance
+      - alert
+
+  replay:
+    enabled: true
+    max_speed: 10
+    default_speed: 1
+    buffer_size: 1000
+
+# 机器学习配置
+ml:
+  model_path: "./models"
+  model_type: "decision_tree"
+  max_tree_depth: 10
+
+  training:
+    enabled: true
+    interval: "1d"
+    min_samples: 100
+    test_ratio: 0.2
+
+  features:
+    lookback_days: 20
+    lookahead_days: 3
+    include_volume: true
+    include_indicators: true
+
+# LLM配置
+llm:
+  provider: "deepseek"
+  api_key: "${DEEPSEEK_API_KEY}"
+  model: "deepseek-chat"
+  timeout: 10s
+  max_tokens: 500
+  temperature: 0.3
+
+# 交易系统配置
+trading:
+  enabled: true
+
+  broker:
+    type: "easytrader"
+    service_url: "http://localhost:8888"
+    broker_type: "yh"
+    username: "${BROKER_USERNAME}"
+    password: "${BROKER_PASSWORD}"
+    exe_path: ""
+
+  risk_control:
+    initial_capital: 100000.0
+    max_single_position: 0.3
+    max_positions: 3
+    max_daily_loss: 0.1
+    min_order_amount: 100.0
+    stop_loss_percent: 0.05
+
+  auto_trade:
+    enabled: false
+    check_interval: "1m"
+    ai_threshold: 0.7
+    ml_confidence: 0.6
+
+  # 策略配置
+  strategies:
+    - name: "ma_strategy"
+      type: "ma"
+      enabled: true
+      weight: 0.3
+      priority: 1
+      parameters:
+        short_period: 5
+        long_period: 20
+        min_volume: 1000000
+        max_change: 0.05
+    - name: "rsi_strategy"
+      type: "rsi"
+      enabled: true
+      weight: 0.25
+      priority: 2
+      parameters:
+        period: 14
+        oversold: 30.0
+        overbought: 70.0
+        min_volume: 500000
+        price_filter: true
+    - name: "ai_strategy"
+      type: "ai"
+      enabled: true
+      weight: 0.4
+      priority: 3
+      parameters:
+        threshold: 0.7
+        confidence: 0.6
+        analysis_interval: "1h"
+        market_context: true
+        risk_analysis: true
+    - name: "ml_strategy"
+      type: "ml"
+      enabled: true
+      weight: 0.3
+      priority: 4
+      parameters:
+        lookback_days: 20
+        confidence: 0.6
+        features: ["price", "volume", "ma5", "ma10", "rsi"]
+        update_frequency: "1h"
+        use_real_time: true
+
+  scheduler:
+    enabled: true
+    interval: "1m"
+    cron_expression: ""
+
+  portfolio_risk:
+    max_industry_exposure: 0.6
+    max_sector_exposure: 0.8
+    max_symbol_exposure: 0.3
+    concentration_alert: 0.4
+
+  volatility_risk:
+    max_volatility: 0.3
+    volatility_threshold: 0.2
+    lookback_period: 20
+    adjustment_factor: 0.8
+
+  cooldown_risk:
+    min_trade_interval: "5m"
+    max_daily_trades: 20
+    min_order_interval: "1m"
+    max_weekly_trades: 100
+    blacklist_duration: "24h"
+    enable_cooldown: true
+
+  ai_risk:
+    enabled: true
+    analysis_interval: "1h"
+    cache_expiry: "6h"
+    risk_threshold: 0.7
+    auto_alert: true
+    deep_learning: true
+    sentiment_analysis: true
+    news_analysis: false
+
+  portfolio:
+    rebalance_frequency: "1d"
+    max_turnover: 0.2
+    min_position_weight: 0.05
+    max_position_weight: 0.4
+    target_return: 0.15
+    risk_free_rate: 0.03
+
+  optimizer:
+    method: "equal_weight"
+    risk_free_rate: 0.03
+    lookback_period: 252
+    min_weight: 0.05
+    max_weight: 0.4
+    rebalance_period: 30
+
+# 监控告警配置
+monitoring:
+  websocket:
+    enabled: true
+    port: 8080
+    max_connections: 100
+
+  alerts:
+    enabled: true
+    channels:
+      email:
+        enabled: false
+        smtp_host: ""
+        smtp_port: 587
+        username: ""
+        password: ""
+        to: ""
+      feishu:
+        enabled: false
+        webhook: "${FEISHU_WEBHOOK}"
+        rate_limit:
+          max_per_hour: 10
+          max_per_day: 100
+          cooldown: "5m"
+      dingding:
+        enabled: false
+        webhook: "${DINGDING_WEBHOOK}"
+        rate_limit:
+          max_per_hour: 20
+          max_per_day: 200
+          cooldown: "3m"
+
+# 回测系统配置
+backtest:
+  enabled: true
+  default_config:
+    start_date: "2023-01-01"
+    end_date: "2024-01-01"
+    initial_capital: 100000.0
+    commission: 0.001
+    slippage: 0.0005
+    risk_free_rate: 0.03
+    max_drawdown_limit: 0.2
+    realtime: false
+
+  parameter_search:
+    method: "grid_search"
+    metric: "sharpe_ratio"
+    max_iterations: 100
+    min_samples: 10
+    parallel: false
+    max_workers: 4
+    early_stopping: true
+    patience: 10
+
+# 性能配置
+performance:
+  gc_target: 100
+  max_memory_mb: 4096
+  max_cpu_percent: 80
+
+# Mock数据配置
+mock:
+  enabled: false
+  volatility: 0.02
+  trend: 0.0001
+  market_phase: "sideways"
+  symbols:
+    - sh600000
+    - sh601398
+    - sh600519
+    - sh600036

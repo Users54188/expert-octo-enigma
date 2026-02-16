@@ -1,0 +1,54 @@
+[Unit]
+Description=CloudQuantBot Trading System
+Documentation=https://github.com/yourorg/cloudquant
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=cloudquant
+Group=cloudquant
+WorkingDirectory=/opt/cloudquant
+
+# 主程序
+ExecStart=/opt/cloudquant/cloudquant --config /opt/cloudquant/config/config.production.yaml
+
+# 重启策略
+Restart=always
+RestartSec=5
+
+# 环境变量
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=-/etc/cloudquant/cloudquant.env
+
+# 资源限制
+LimitNOFILE=65535
+LimitNPROC=4096
+MemoryLimit=6G
+CPUQuota=600%
+
+# 安全加固
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/cloudquant/data /opt/cloudquant/logs /var/log/cloudquant
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_NET_RAW
+
+# 日志
+StandardOutput=append:/var/log/cloudquant/systemd.log
+StandardError=append:/var/log/cloudquant/systemd-error.log
+SyslogIdentifier=cloudquant
+
+# 进程管理
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# 进程优先级
+Nice=0
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=multi-user.target
