@@ -1,73 +1,209 @@
-# 监控的股票
+# CloudQuantBot 完整配置文件
+# 适用于6c8g本地开发环境
+
+app:
+  name: "CloudQuantBot"
+  version: "1.0.0"
+  mode: "local" # local/dev/production
+  debug: true
+
+# HTTP服务器配置
+server:
+  http:
+    port: 8080
+    timeout: 30s
+    cors:
+      enabled: true
+      origins: ["*"]
+  
+  websocket:
+    enabled: true
+    max_connections: 100
+    message_buffer: 256
+    heartbeat: 30s
+
+# 数据库配置 - SQLite优化
+ database:
+  driver: "sqlite3"
+  dsn: "./data/quant.db?_journal_mode=WAL&_busy_timeout=5000&_cache_size=10000"
+  max_open_conns: 10
+  max_idle_conns: 5
+  conn_max_lifetime: 1h
+
+# 缓存配置
+cache:
+  type: "lru"
+  size: 10000
+  ttl: 5m
+
+# 日志配置
+log:
+  level: "info"
+  format: "json"
+  output: "file"
+  file:
+    path: "./logs/cloudquant.log"
+    max_size: 100      # MB
+    max_age: 7         # days
+    max_backups: 10
+    compress: true
+  console:
+    enabled: true
+    color: true
+
+# 监控的股票列表
 symbols:
   - sh600000
   - sh601398
   - sh600519
   - sh600036
+  - sh000001
+  - sz399001
 
-# 数据库
-database:
-  path: "./data/quant.db"
+# 市场数据源配置
+market:
+  data_source:
+    primary: "sina"
+    fallback: ["eastmoney", "tencent"]
+    mock_on_failure: true
+    failover_timeout: 5s
+    health_check_interval: 30s
+  
+  providers:
+    sina:
+      enabled: true
+      priority: 1
+      timeout: 10s
+      rate_limit: 100
+      base_url: "https://hq.sinajs.cn"
+    eastmoney:
+      enabled: true
+      priority: 2
+      timeout: 10s
+      rate_limit: 100
+      base_url: "https://push2.eastmoney.com/api"
+    tencent:
+      enabled: true
+      priority: 3
+      timeout: 10s
+      rate_limit: 100
+      base_url: "https://qt.gtimg.cn"
+  
+  anomaly_detection:
+    enabled: true
+    price_jump_threshold: 0.05      # 5%价格跳变阈值
+    volume_spike_factor: 3.0        # 3倍成交量异常
+    latency_threshold: 5s           # 延迟阈值
+    stale_data_threshold: 60s       # 数据过期阈值
+    spread_threshold: 0.02          # 价差阈值
 
-# HTTP服务
-http:
-  port: 8080
+# 行业数据配置
+industry:
+  data_file: "./data/industries.json"
+  cache_enabled: true
+  cache_ttl: 24h
+  benchmark: "csi300"              # 沪深300基准
 
-# 日志
-log:
-  level: info
+# 风险模型配置
+risk:
+  enabled: true
+  var_confidence: 0.95
+  var_method: "historical"
+  lookback_days: 252
+  
+  metrics:
+    - sharpe
+    - sortino
+    - calmar
+    - var
+    - cvar
+    - max_drawdown
+    - volatility
+    - beta
+    - alpha
+  
+  attribution:
+    enabled: true
+    benchmark: "csi300"
+    frequency: "daily"
+  
+  limits:
+    max_single_position: 0.3
+    max_positions: 10
+    max_daily_loss: 0.1
+    max_drawdown: 0.2
 
-# DeepSeek LLM
-llm:
-  provider: deepseek
-  api_key: "${DEEPSEEK_API_KEY}"
-  model: "deepseek-chat"
-  timeout: 10s
-  max_tokens: 200
+# 可视化与回放配置
+visualization:
+  websocket:
+    enabled: true
+    channels:
+      - market
+      - position
+      - signal
+      - performance
+      - alert
+  
+  replay:
+    enabled: true
+    max_speed: 10
+    default_speed: 1
+    buffer_size: 1000
 
-# 机器学习
+# 机器学习配置
 ml:
+  model_path: "./models"
   model_type: "decision_tree"
-  model_path: "./models/dt.model"
   max_tree_depth: 10
-  train_interval: "7d"
-
+  
+  training:
+    enabled: false
+    interval: "1d"
+    min_samples: 100
+    test_ratio: 0.2
+  
   features:
     lookback_days: 20
     lookahead_days: 3
+    include_volume: true
+    include_indicators: true
 
-  training:
-    min_data_points: 100
-    test_ratio: 0.2
+# LLM配置
+llm:
+  provider: "deepseek"
+  api_key: "${DEEPSEEK_API_KEY}"
+  model: "deepseek-chat"
+  timeout: 10s
+  max_tokens: 500
+  temperature: 0.3
 
-# 交易系统
+# 交易系统配置
 trading:
-  # 券商配置
+  enabled: false                    # 本地模式禁用真实交易
+  
   broker:
     type: "easytrader"
     service_url: "http://localhost:8888"
-    broker_type: "yh"  # 银河证券（最稳定），支持: ht(华泰), yh(银河), yjb(佣金宝), xq(雪球)
+    broker_type: "yh"
     username: "${BROKER_USERNAME}"
     password: "${BROKER_PASSWORD}"
-    exe_path: ""  # 券商客户端路径（如需要）
-
-  # 风险管理
-  risk:
-    initial_capital: 100.0      # 初始资金（元）
-    max_single_position: 0.3    # 单只股票最多投入总资金30%
-    max_positions: 3           # 最多持仓3只股票
-    max_daily_loss: 0.1        # 单日亏损10%时全部平仓
-    min_order_amount: 100.0    # 最小下单金额100元
-    stop_loss_percent: 0.05    # 单只股票亏损5%止损
-
-  # 自动交易
+    exe_path: ""
+  
+  risk_control:
+    initial_capital: 100000.0
+    max_single_position: 0.3
+    max_positions: 3
+    max_daily_loss: 0.1
+    min_order_amount: 100.0
+    stop_loss_percent: 0.05
+  
   auto_trade:
-    enabled: false             # 是否启用自动交易
-    check_interval: "1m"       # 检查间隔
-    ai_threshold: 0.7          # AI信号阈值
-    ml_confidence: 0.6         # ML置信度阈值
-
-  # 多策略框架
+    enabled: false
+    check_interval: "1m"
+    ai_threshold: 0.7
+    ml_confidence: 0.6
+  
+  # 策略配置
   strategies:
     - name: "ma_strategy"
       type: "ma"
@@ -112,26 +248,24 @@ trading:
         features: ["price", "volume", "ma5", "ma10", "rsi"]
         update_frequency: "1h"
         use_real_time: true
-
-  # 策略调度器
+  
   scheduler:
     enabled: true
     interval: "1m"
     cron_expression: ""
-
-  # 高级风险管理
+  
   portfolio_risk:
     max_industry_exposure: 0.6
     max_sector_exposure: 0.8
     max_symbol_exposure: 0.3
     concentration_alert: 0.4
-
+  
   volatility_risk:
     max_volatility: 0.3
     volatility_threshold: 0.2
     lookback_period: 20
     adjustment_factor: 0.8
-
+  
   cooldown_risk:
     min_trade_interval: "5m"
     max_daily_trades: 20
@@ -139,7 +273,7 @@ trading:
     max_weekly_trades: 100
     blacklist_duration: "24h"
     enable_cooldown: true
-
+  
   ai_risk:
     enabled: true
     analysis_interval: "1h"
@@ -149,8 +283,7 @@ trading:
     deep_learning: true
     sentiment_analysis: true
     news_analysis: false
-
-  # 组合管理
+  
   portfolio:
     rebalance_frequency: "1d"
     max_turnover: 0.2
@@ -158,8 +291,7 @@ trading:
     max_position_weight: 0.4
     target_return: 0.15
     risk_free_rate: 0.03
-
-  # 组合优化器
+  
   optimizer:
     method: "equal_weight"
     risk_free_rate: 0.03
@@ -168,14 +300,13 @@ trading:
     max_weight: 0.4
     rebalance_period: 30
 
-# 实时监控与告警系统
+# 监控告警配置
 monitoring:
   websocket:
     enabled: true
     port: 8080
     max_connections: 100
-    
-  # 告警系统
+  
   alerts:
     enabled: true
     channels:
@@ -187,7 +318,7 @@ monitoring:
         password: ""
         to: ""
       feishu:
-        enabled: true
+        enabled: false
         webhook: "${FEISHU_WEBHOOK}"
         rate_limit:
           max_per_hour: 10
@@ -201,7 +332,7 @@ monitoring:
           max_per_day: 200
           cooldown: "3m"
 
-# 回测系统
+# 回测系统配置
 backtest:
   enabled: true
   default_config:
@@ -214,7 +345,6 @@ backtest:
     max_drawdown_limit: 0.2
     realtime: false
   
-  # 参数优化
   parameter_search:
     method: "grid_search"
     metric: "sharpe_ratio"
@@ -224,3 +354,15 @@ backtest:
     max_workers: 4
     early_stopping: true
     patience: 10
+
+# Mock数据配置
+mock:
+  enabled: true
+  volatility: 0.02
+  trend: 0.0001
+  market_phase: "sideways"  # bull, bear, sideways
+  symbols:
+    - sh600000
+    - sh601398
+    - sh600519
+    - sh600036

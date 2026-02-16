@@ -15,6 +15,7 @@ import (
 	"cloudquant/http"
 	"cloudquant/llm"
 	"cloudquant/market"
+	"cloudquant/market/industry"
 	"cloudquant/ml"
 	"cloudquant/monitoring"
 	"cloudquant/trading"
@@ -252,9 +253,15 @@ func main() {
 
 	initializeServices(config)
 
-	// 3. Start HTTP server
-	server := http.NewServer(config.Http.Port)
+	// 3. Start HTTP server with middleware
+	serverConfig := http.DefaultServerConfig()
+	serverConfig.Port = config.Http.Port
+	serverConfig.Timeout = 30 * time.Second
+	serverConfig.AllowedOrigins = []string{"*"}
+
+	server := http.NewServer(serverConfig)
 	go func() {
+		log.Printf("Starting server on http://localhost%s", server.Addr())
 		if err := server.Start(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("HTTP server failed: %v", err)
 		}
@@ -266,6 +273,7 @@ func main() {
 	<-quit
 	log.Println("Shutting down...")
 
+	// 停止HTTP服务器
 	if err := server.Stop(); err != nil {
 		log.Printf("Server forced to shutdown: %v", err)
 	}
@@ -311,20 +319,53 @@ func initializeServices(config *Config) {
 		TestRatio:    config.ML.Training.TestRatio,
 	})
 
-	// 2. 初始化多策略框架
+	// 2. 初始化行业数据缓存
+	initializeIndustryCache()
+
+	// 3. 初始化回放引擎
+	initializeReplayEngine()
+
+	// 4. 初始化多策略框架
 	initializeMultiStrategySystem(config)
 
-	// 3. 初始化监控系统
+	// 5. 初始化监控系统
 	initializeMonitoringSystem(config)
 
-	// 4. 初始化传统交易系统（保持向后兼容）
+	// 6. 初始化传统交易系统（保持向后兼容）
 	initializeLegacyTradingSystem(config)
 
-	// 5. 初始化组合管理系统
+	// 7. 初始化组合管理系统
 	initializePortfolioSystem(config)
 
-	// 6. 初始化回测系统
+	// 8. 初始化回测系统
 	initializeBacktestSystem(config)
+}
+
+// initializeIndustryCache 初始化行业数据缓存
+func initializeIndustryCache() {
+	log.Println("Initializing industry cache...")
+
+	cache, err := industry.GetGlobalCache("./data/industries.json")
+	if err != nil {
+		log.Printf("Failed to load industry cache: %v", err)
+		return
+	}
+
+	// 启动自动重载
+	cache.StartAutoReload(24 * time.Hour)
+	log.Printf("Industry cache loaded: %d stocks", len(cache.GetAllStocks()))
+}
+
+// initializeReplayEngine 初始化回放引擎
+func initializeReplayEngine() {
+	log.Println("Initializing replay engine...")
+
+	// 使用Mock数据提供者作为默认
+	dataProvider := monitoring.NewMockReplayDataProvider()
+	replayEngine := monitoring.NewReplayEngine(dataProvider)
+	http.SetReplayEngine(replayEngine)
+
+	log.Println("Replay engine initialized")
 }
 
 func firstSymbol(symbols []string) string {
