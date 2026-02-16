@@ -11,8 +11,8 @@ func TestDecisionTreeTrainPredict(t *testing.T) {
 	}
 	labels := []int{0, 0, 2, 2}
 
-	model := &DecisionTree{}
-	if err := model.Train(features, labels, 2); err != nil {
+	model := NewDecisionTree(2)
+	if err := model.Train(features, labels); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	label, confidence, err := model.Predict([]float64{0.15, 0.15})

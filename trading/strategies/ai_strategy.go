@@ -330,7 +330,7 @@ func (a *AIStrategy) generateSimpleSignal(marketData *MarketData) (*Signal, erro
 // OnTrade 交易回调
 func (a *AIStrategy) OnTrade(ctx context.Context, trade *trading.TradeRecord) error {
 	log.Printf("AI strategy trade executed: %s %d shares at %.2f",
-		trade.Symbol, trade.Quantity, trade.Price)
+		trade.Symbol, trade.Volume, trade.Price)
 	return nil
 }
 

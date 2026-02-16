@@ -287,6 +287,40 @@ func (rm *RiskManager) GetRiskMetrics() RiskMetrics {
 	return metrics
 }
 
+// GetPortfolioSummary 获取投资组合摘要
+func (rm *RiskManager) GetPortfolioSummary() PortfolioSummary {
+	balance, err := rm.connector.GetCachedBalance()
+
+	rm.mu.RLock()
+	dailyStart := rm.dailyStartEquity
+	dailyPnL := rm.dailyPnL
+	rm.mu.RUnlock()
+
+	totalValue := rm.config.InitialCapital
+	if err == nil && balance != nil {
+		totalValue = balance.TotalAssets
+		dailyPnL = totalValue - dailyStart
+	}
+
+	dailyPnLPercent := 0.0
+	if dailyStart > 0 {
+		dailyPnLPercent = dailyPnL / dailyStart
+	}
+
+	drawdown := 0.0
+	if dailyStart > 0 && totalValue < dailyStart {
+		drawdown = (dailyStart - totalValue) / dailyStart
+	}
+
+	return PortfolioSummary{
+		TotalValue:      totalValue,
+		DailyPnL:        dailyPnL,
+		DailyPnLPercent: dailyPnLPercent,
+		Drawdown:        drawdown,
+		Timestamp:       time.Now(),
+	}
+}
+
 // ResetDaily 重置当日状态（新交易日）
 func (rm *RiskManager) ResetDaily() {
 	rm.mu.Lock()
@@ -321,6 +355,15 @@ type RiskMetrics struct {
 	DailyPnLPercent float64 `json:"daily_pnl_percent"`
 	PositionCount   int     `json:"position_count"`
 	EmergencyStop   bool    `json:"emergency_stop"`
+}
+
+// PortfolioSummary 投资组合摘要
+type PortfolioSummary struct {
+	TotalValue      float64   `json:"total_value"`
+	DailyPnL        float64   `json:"daily_pnl"`
+	DailyPnLPercent float64   `json:"daily_pnl_percent"`
+	Drawdown        float64   `json:"drawdown"`
+	Timestamp       time.Time `json:"timestamp"`
 }
 
 // 订单类型

@@ -12,6 +12,10 @@ type DecisionTree struct {
 	maxDepth int
 }
 
+func NewDecisionTree(maxDepth int) *DecisionTree {
+	return &DecisionTree{maxDepth: maxDepth}
+}
+
 type TreeNode struct {
 	FeatureIdx int     `json:"feature_idx"`
 	Threshold  float64 `json:"threshold"`

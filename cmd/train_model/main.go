@@ -30,8 +30,8 @@ func main() {
 
 	trainX, trainY, testX, testY := splitDataset(features, labels, *testRatio)
 
-	model := &ml.DecisionTree{}
-	if err := model.Train(trainX, trainY, *maxDepth); err != nil {
+	model := ml.NewDecisionTree(*maxDepth)
+	if err := model.Train(trainX, trainY); err != nil {
 		log.Fatalf("failed to train model: %v", err)
 	}
 

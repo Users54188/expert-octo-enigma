@@ -429,7 +429,7 @@ func (m *MLStrategy) calculateStopLoss(currentPrice float64, signalType string, 
 // OnTrade 交易回调
 func (m *MLStrategy) OnTrade(ctx context.Context, trade *trading.TradeRecord) error {
 	log.Printf("ML strategy trade executed: %s %d shares at %.2f",
-		trade.Symbol, trade.Quantity, trade.Price)
+		trade.Symbol, trade.Volume, trade.Price)
 	return nil
 }
 

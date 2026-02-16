@@ -149,9 +149,6 @@ func (c *CooldownRisk) getDailyTradeCount(symbol string, now time.Time) int {
 	// 简化实现：使用内存中的计数
 	// 实际应该查询数据库获取真实的历史交易记录
 
-	// 检查是否跨日重置
-	day := now.Format("2006-01-02")
-
 	// 这里简化处理，实际应该根据日期重置计数
 	return c.tradeCounts[symbol]
 }
@@ -160,9 +157,6 @@ func (c *CooldownRisk) getDailyTradeCount(symbol string, now time.Time) int {
 func (c *CooldownRisk) getWeeklyTradeCount(symbol string, now time.Time) int {
 	// 简化实现：使用内存中的计数
 	// 实际应该查询数据库获取真实的历史交易记录
-
-	// 检查是否跨周重置
-	week := getWeekString(now)
 
 	// 这里简化处理，实际应该根据周重置计数
 	return c.tradeCounts[symbol] / 7 // 简化计算
@@ -243,8 +237,6 @@ func (c *CooldownRisk) GetAllCooldownStatus() map[string]*CooldownStatus {
 
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-
-	now := time.Now()
 
 	for symbol := range c.lastTrades {
 		status[symbol] = c.GetCooldownStatus(symbol)
@@ -364,10 +356,4 @@ type CooldownStats struct {
 	TotalTrades         int       `json:"total_trades"`
 	LastTradeTime       time.Time `json:"last_trade_time"`
 	Enabled             bool      `json:"enabled"`
-}
-
-// 工具函数
-func getWeekString(t time.Time) string {
-	year, week := t.ISOWeek()
-	return fmt.Sprintf("%d-%02d", year, week)
 }
