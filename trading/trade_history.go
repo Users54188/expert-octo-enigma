@@ -33,54 +33,54 @@ func NewTradeHistory(dbPath string) (*TradeHistory, error) {
 func createTradeTables(db *sql.DB) error {
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS trades (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			trade_id TEXT NOT NULL,
-			order_id TEXT NOT NULL,
-			symbol TEXT NOT NULL,
-			type TEXT NOT NULL,
-			price REAL NOT NULL,
-			amount INTEGER NOT NULL,
-			commission REAL DEFAULT 0,
-			trade_time DATETIME NOT NULL,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			UNIQUE(trade_id)
-		)`,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            trade_id TEXT NOT NULL,
+            order_id TEXT NOT NULL,
+            symbol TEXT NOT NULL,
+            type TEXT NOT NULL,
+            price REAL NOT NULL,
+            amount INTEGER NOT NULL,
+            commission REAL DEFAULT 0,
+            trade_time DATETIME NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(trade_id)
+        )`,
 		`CREATE TABLE IF NOT EXISTS orders (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			order_id TEXT NOT NULL,
-			symbol TEXT NOT NULL,
-			type TEXT NOT NULL,
-			price REAL NOT NULL,
-			amount INTEGER NOT NULL,
-			filled_amount INTEGER DEFAULT 0,
-			status TEXT NOT NULL,
-			order_time DATETIME NOT NULL,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			UNIQUE(order_id)
-		)`,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id TEXT NOT NULL,
+            symbol TEXT NOT NULL,
+            type TEXT NOT NULL,
+            price REAL NOT NULL,
+            amount INTEGER NOT NULL,
+            filled_amount INTEGER DEFAULT 0,
+            status TEXT NOT NULL,
+            order_time DATETIME NOT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(order_id)
+        )`,
 		`CREATE TABLE IF NOT EXISTS positions (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			symbol TEXT NOT NULL UNIQUE,
-			amount INTEGER DEFAULT 0,
-			cost_price REAL DEFAULT 0,
-			total_cost REAL DEFAULT 0,
-			current_price REAL DEFAULT 0,
-			market_value REAL DEFAULT 0,
-			unrealized_pnl REAL DEFAULT 0,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL UNIQUE,
+            amount INTEGER DEFAULT 0,
+            cost_price REAL DEFAULT 0,
+            total_cost REAL DEFAULT 0,
+            current_price REAL DEFAULT 0,
+            market_value REAL DEFAULT 0,
+            unrealized_pnl REAL DEFAULT 0,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`,
 		`CREATE TABLE IF NOT EXISTS daily_performance (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			date TEXT NOT NULL UNIQUE,
-			open_equity REAL DEFAULT 0,
-			close_equity REAL DEFAULT 0,
-			daily_pnl REAL DEFAULT 0,
-			daily_pnl_percent REAL DEFAULT 0,
-			trade_count INTEGER DEFAULT 0,
-			buy_count INTEGER DEFAULT 0,
-			sell_count INTEGER DEFAULT 0,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL UNIQUE,
+            open_equity REAL DEFAULT 0,
+            close_equity REAL DEFAULT 0,
+            daily_pnl REAL DEFAULT 0,
+            daily_pnl_percent REAL DEFAULT 0,
+            trade_count INTEGER DEFAULT 0,
+            buy_count INTEGER DEFAULT 0,
+            sell_count INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`,
 	}
 
 	for _, query := range queries {
@@ -99,7 +99,7 @@ type TradeRecord struct {
 	Symbol     string    `json:"symbol"`
 	Type       string    `json:"type"`
 	Price      float64   `json:"price"`
-	Amount     int       `json:"amount"`
+	Volume     int64     `json:"volume"`
 	Commission float64   `json:"commission"`
 	TradeTime  time.Time `json:"trade_time"`
 }
@@ -111,11 +111,11 @@ func (th *TradeHistory) SaveTrade(trade TradeRecord) error {
 	}
 
 	_, err := th.db.Exec(`
-		INSERT OR REPLACE INTO trades (
-			trade_id, order_id, symbol, type, price, amount, commission, trade_time
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	`, trade.TradeID, trade.OrderID, trade.Symbol, trade.Type,
-		trade.Price, trade.Amount, trade.Commission, trade.TradeTime)
+        INSERT OR REPLACE INTO trades (
+            trade_id, order_id, symbol, type, price, amount, commission, trade_time
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, trade.TradeID, trade.OrderID, trade.Symbol, trade.Type,
+		trade.Price, trade.Volume, trade.Commission, trade.TradeTime)
 
 	return err
 }
@@ -127,10 +127,10 @@ func (th *TradeHistory) SaveOrder(order Order) error {
 	}
 
 	_, err := th.db.Exec(`
-		INSERT OR REPLACE INTO orders (
-			order_id, symbol, type, price, amount, filled_amount, status, order_time
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	`, order.OrderID, order.Symbol, order.Type, order.Price,
+        INSERT OR REPLACE INTO orders (
+            order_id, symbol, type, price, amount, filled_amount, status, order_time
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, order.OrderID, order.Symbol, order.Type, order.Price,
 		order.Amount, order.FilledAmount, order.Status, order.OrderTime)
 
 	return err
@@ -143,9 +143,9 @@ func (th *TradeHistory) UpdateOrderStatus(orderID, status string) error {
 	}
 
 	_, err := th.db.Exec(`
-		UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP
-		WHERE order_id = ?
-	`, status, orderID)
+        UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE order_id = ?
+    `, status, orderID)
 
 	return err
 }
@@ -157,11 +157,11 @@ func (th *TradeHistory) GetTrades(limit int) ([]TradeRecord, error) {
 	}
 
 	query := `
-		SELECT trade_id, order_id, symbol, type, price, amount, commission, trade_time
-		FROM trades
-		ORDER BY trade_time DESC
-		LIMIT ?
-	`
+        SELECT trade_id, order_id, symbol, type, price, amount, commission, trade_time
+        FROM trades
+        ORDER BY trade_time DESC
+        LIMIT ?
+    `
 
 	rows, err := th.db.Query(query, limit)
 	if err != nil {
@@ -174,7 +174,7 @@ func (th *TradeHistory) GetTrades(limit int) ([]TradeRecord, error) {
 		var trade TradeRecord
 		err := rows.Scan(
 			&trade.TradeID, &trade.OrderID, &trade.Symbol, &trade.Type,
-			&trade.Price, &trade.Amount, &trade.Commission, &trade.TradeTime,
+			&trade.Price, &trade.Volume, &trade.Commission, &trade.TradeTime,
 		)
 		if err != nil {
 			return nil, err
@@ -192,11 +192,11 @@ func (th *TradeHistory) GetOrders(limit int) ([]Order, error) {
 	}
 
 	query := `
-		SELECT order_id, symbol, type, price, amount, filled_amount, status, order_time
-		FROM orders
-		ORDER BY order_time DESC
-		LIMIT ?
-	`
+        SELECT order_id, symbol, type, price, amount, filled_amount, status, order_time
+        FROM orders
+        ORDER BY order_time DESC
+        LIMIT ?
+    `
 
 	rows, err := th.db.Query(query, limit)
 	if err != nil {
@@ -239,11 +239,11 @@ func (th *TradeHistory) SaveDailyPnL(pnl DailyPnL) error {
 	}
 
 	_, err := th.db.Exec(`
-		INSERT OR REPLACE INTO daily_performance (
-			date, open_equity, close_equity, daily_pnl, daily_pnl_percent,
-			trade_count, buy_count, sell_count
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	`, pnl.Date, pnl.OpenEquity, pnl.CloseEquity, pnl.PnL, pnl.PnLPercent,
+        INSERT OR REPLACE INTO daily_performance (
+            date, open_equity, close_equity, daily_pnl, daily_pnl_percent,
+            trade_count, buy_count, sell_count
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, pnl.Date, pnl.OpenEquity, pnl.CloseEquity, pnl.PnL, pnl.PnLPercent,
 		pnl.TradeCount, pnl.BuyCount, pnl.SellCount)
 
 	return err
@@ -256,12 +256,12 @@ func (th *TradeHistory) GetDailyPnL(days int) ([]DailyPnL, error) {
 	}
 
 	query := `
-		SELECT date, open_equity, close_equity, daily_pnl, daily_pnl_percent,
-		       trade_count, buy_count, sell_count
-		FROM daily_performance
-		ORDER BY date DESC
-		LIMIT ?
-	`
+        SELECT date, open_equity, close_equity, daily_pnl, daily_pnl_percent,
+               trade_count, buy_count, sell_count
+        FROM daily_performance
+        ORDER BY date DESC
+        LIMIT ?
+    `
 
 	rows, err := th.db.Query(query, days)
 	if err != nil {
@@ -362,7 +362,7 @@ func (th *TradeHistory) CalculatePerformance(initialCapital float64) (*Performan
 	symbolPnL := make(map[string]float64)
 	for _, trade := range trades {
 		if trade.Type == "卖出" || trade.Type == "sell" {
-			pnl := (trade.Price - 0) * float64(trade.Amount) // 简化计算，实际需要买入价
+			pnl := (trade.Price - 0) * float64(trade.Volume) // 简化计算，实际需要买入价
 			symbolPnL[trade.Symbol] += pnl
 		}
 	}

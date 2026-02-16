@@ -65,8 +65,8 @@ func trainModel(config TrainingConfig) error {
 
 	trainX, trainY, testX, testY := splitDataset(featureVectors, labels, config.TestRatio)
 
-	model := &ml.DecisionTree{}
-	if err := model.Train(trainX, trainY, config.MaxTreeDepth); err != nil {
+	model := ml.NewDecisionTree(config.MaxTreeDepth)
+	if err := model.Train(trainX, trainY); err != nil {
 		return err
 	}
 

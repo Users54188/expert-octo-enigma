@@ -163,7 +163,7 @@ func (r *RSIStrategy) GenerateSignal(ctx context.Context, marketData *MarketData
 // OnTrade 交易回调
 func (r *RSIStrategy) OnTrade(ctx context.Context, trade *trading.TradeRecord) error {
 	log.Printf("RSI strategy trade executed: %s %d shares at %.2f",
-		trade.Symbol, trade.Quantity, trade.Price)
+		trade.Symbol, trade.Volume, trade.Price)
 	return nil
 }
 

@@ -414,10 +414,8 @@ func (a *AIRisk) GetAnalysisHistory(symbol string, limit int) []RiskAnalysis {
 
 // GetPortfolioRiskScore 获取组合风险评分
 func (a *AIRisk) GetPortfolioRiskScore(ctx context.Context) (*PortfolioAIRiskScore, error) {
-	positions, err := a.positionManager.GetAllPositions(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get positions: %v", err)
-	}
+	_ = ctx
+	positions := a.positionManager.GetAllPositions()
 
 	if len(positions) == 0 {
 		return &PortfolioAIRiskScore{

@@ -240,10 +240,7 @@ func (v *VolatilityRisk) GetRiskMetrics(ctx context.Context) (*VolatilityRiskMet
 	}
 
 	// 获取所有持仓
-	positions, err := v.positionManager.GetAllPositions(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get positions: %v", err)
-	}
+	positions := v.positionManager.GetAllPositions()
 
 	totalValue := 0.0
 	weightedVolatility := 0.0
@@ -269,8 +266,8 @@ func (v *VolatilityRisk) GetRiskMetrics(ctx context.Context) (*VolatilityRiskMet
 }
 
 // filterHighVolPositions 过滤高波动率持仓
-func (v *VolatilityRisk) filterHighVolPositions(ctx context.Context, positions []trading.Position) []trading.Position {
-	var highVolPositions []trading.Position
+func (v *VolatilityRisk) filterHighVolPositions(ctx context.Context, positions []*trading.PositionState) []*trading.PositionState {
+	var highVolPositions []*trading.PositionState
 
 	for _, pos := range positions {
 		volatility, err := v.CalculateVolatility(ctx, pos.Symbol)

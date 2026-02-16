@@ -194,24 +194,22 @@ func (m *RealtimeRiskMonitor) checkRisks(ctx context.Context) error {
 
 // checkPositionRisk 检查持仓风险
 func (m *RealtimeRiskMonitor) checkPositionRisk(ctx context.Context) error {
+	_ = ctx
 	if m.positionManager == nil {
 		return nil
 	}
 
-	positions, err := m.positionManager.GetAllPositions(ctx)
-	if err != nil {
-		return err
-	}
+	positions := m.positionManager.GetAllPositions()
 
 	totalValue := 0.0
 	for _, pos := range positions {
-		totalValue += pos.CurrentValue
+		totalValue += pos.MarketValue
 	}
 
 	// 检查单个持仓占比
 	for _, pos := range positions {
 		if totalValue > 0 {
-			exposure := pos.CurrentValue / totalValue
+			exposure := pos.MarketValue / totalValue
 			m.exposureLock.Lock()
 			m.exposureCache[pos.Symbol] = exposure
 			m.exposureLock.Unlock()
@@ -229,7 +227,7 @@ func (m *RealtimeRiskMonitor) checkPositionRisk(ctx context.Context) error {
 						Value:     exposure,
 						Threshold: limit.CriticalThreshold,
 						Timestamp: time.Now(),
-						Metadata:  map[string]string{"position_value": fmt.Sprintf("%.2f", pos.CurrentValue)},
+						Metadata:  map[string]string{"position_value": fmt.Sprintf("%.2f", pos.MarketValue)},
 					}
 					m.triggerAlert(event)
 				} else if exposure >= limit.WarningThreshold {
@@ -254,15 +252,13 @@ func (m *RealtimeRiskMonitor) checkPositionRisk(ctx context.Context) error {
 
 // checkPortfolioRisk 检查组合风险
 func (m *RealtimeRiskMonitor) checkPortfolioRisk(ctx context.Context) error {
+	_ = ctx
 	if m.riskManager == nil {
 		return nil
 	}
 
 	// 检查回撤
-	portfolio, err := m.riskManager.GetPortfolioSummary(ctx)
-	if err != nil {
-		return err
-	}
+	portfolio := m.riskManager.GetPortfolioSummary()
 
 	if limit, ok := m.riskLimits["max_drawdown"]; ok {
 		drawdown := portfolio.Drawdown
@@ -331,22 +327,20 @@ func (m *RealtimeRiskMonitor) checkPortfolioRisk(ctx context.Context) error {
 
 // checkVolatilityRisk 检查波动率风险
 func (m *RealtimeRiskMonitor) checkVolatilityRisk(ctx context.Context) error {
+	_ = ctx
 	if m.positionManager == nil {
 		return nil
 	}
 
-	positions, err := m.positionManager.GetAllPositions(ctx)
-	if err != nil {
-		return err
-	}
+	positions := m.positionManager.GetAllPositions()
 
 	// 简化版波动率计算（实际应使用历史数据计算）
 	for _, pos := range positions {
 		// 这里应该计算实际的波动率
-		// 简化版：使用当日价格变化作为代理
+		// 简化版：使用成本价与现价的变化作为代理
 		dailyChange := 0.0
-		if pos.AvgPrice > 0 {
-			dailyChange = (pos.CurrentPrice - pos.AvgPrice) / pos.AvgPrice
+		if pos.CostPrice > 0 {
+			dailyChange = (pos.CurrentPrice - pos.CostPrice) / pos.CostPrice
 			if dailyChange < 0 {
 				dailyChange = -dailyChange
 			}

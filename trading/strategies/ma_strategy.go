@@ -158,7 +158,7 @@ func (m *MAStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 func (m *MAStrategy) OnTrade(ctx context.Context, trade *trading.TradeRecord) error {
 	// MA策略的交易回调：记录交易信息
 	log.Printf("MA strategy trade executed: %s %d shares at %.2f",
-		trade.Symbol, trade.Quantity, trade.Price)
+		trade.Symbol, trade.Volume, trade.Price)
 	return nil
 }
 
