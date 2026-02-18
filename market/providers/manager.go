@@ -18,18 +18,20 @@ type DataProvider interface {
 
 // Tick 实时行情数据
 type Tick struct {
-	Symbol   string
-	Name     string
-	Price    float64
-	Bid      float64
-	Ask      float64
-	Volume   int64
-	Turnover float64
-	High     float64
-	Low      float64
-	Open     float64
-	PreClose float64
-	Time     time.Time
+	Symbol    string
+	Name      string
+	Price     float64
+	Bid       float64
+	Ask       float64
+	Volume    int64
+	Turnover  float64
+	High      float64
+	Low       float64
+	Open      float64
+	PreClose  float64
+	Time      time.Time
+	Change    float64
+	ChangePct float64
 }
 
 // KLine K线数据

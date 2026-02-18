@@ -83,7 +83,7 @@ func (ep *EastmoneyProvider) FetchTick(ctx context.Context, symbol string) (*Tic
 	open := getFloat(data.F44)
 	high := getFloat(data.F45)
 	low := getFloat(data.F46)
-	volume := getInt64(data.F47)
+	volume := int64(getFloat(data.F47))
 	turnover := getFloat(data.F48)
 	bid := getFloat(data.F51)
 
