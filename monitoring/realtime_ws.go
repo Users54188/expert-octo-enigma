@@ -83,6 +83,7 @@ func NewWebSocketHub() *WebSocketHub {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		upgrader: websocket.Upgrader{
+			// #nosec G402 -- Intentionally allowing all origins for internal WebSocket connections
 			CheckOrigin: func(r *http.Request) bool {
 				return true // 在生产环境中应该设置更严格的origin检查
 			},

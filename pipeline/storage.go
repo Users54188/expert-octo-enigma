@@ -106,38 +106,38 @@ func (os *OptimizedStorage) createTables() error {
 
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS market_data (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			symbol TEXT NOT NULL,
-			timestamp INTEGER NOT NULL,
-			open REAL NOT NULL,
-			high REAL NOT NULL,
-			low REAL NOT NULL,
-			close REAL NOT NULL,
-			volume REAL NOT NULL,
-			amount REAL,
-			extra TEXT,
-			created_at INTEGER DEFAULT (strftime('%s', 'now')),
-			UNIQUE(symbol, timestamp)
-		)`,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL,
+            timestamp INTEGER NOT NULL,
+            open REAL NOT NULL,
+            high REAL NOT NULL,
+            low REAL NOT NULL,
+            close REAL NOT NULL,
+            volume REAL NOT NULL,
+            amount REAL,
+            extra TEXT,
+            created_at INTEGER DEFAULT (strftime('%s', 'now')),
+            UNIQUE(symbol, timestamp)
+        )`,
 		`CREATE TABLE IF NOT EXISTS data_quality (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			symbol TEXT NOT NULL,
-			timestamp INTEGER NOT NULL,
-			issue_type TEXT NOT NULL,
-			severity TEXT NOT NULL,
-			message TEXT,
-			created_at INTEGER DEFAULT (strftime('%s', 'now'))
-		)`,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL,
+            timestamp INTEGER NOT NULL,
+            issue_type TEXT NOT NULL,
+            severity TEXT NOT NULL,
+            message TEXT,
+            created_at INTEGER DEFAULT (strftime('%s', 'now'))
+        )`,
 		`CREATE TABLE IF NOT EXISTS archive_metadata (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			symbol TEXT NOT NULL,
-			start_date INTEGER NOT NULL,
-			end_date INTEGER NOT NULL,
-			record_count INTEGER NOT NULL,
-			file_path TEXT NOT NULL,
-			compressed INTEGER DEFAULT 0,
-			created_at INTEGER DEFAULT (strftime('%s', 'now'))
-		)`,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL,
+            start_date INTEGER NOT NULL,
+            end_date INTEGER NOT NULL,
+            record_count INTEGER NOT NULL,
+            file_path TEXT NOT NULL,
+            compressed INTEGER DEFAULT 0,
+            created_at INTEGER DEFAULT (strftime('%s', 'now'))
+        )`,
 	}
 
 	for _, query := range queries {
@@ -175,8 +175,8 @@ func (os *OptimizedStorage) SaveBatch(ctx context.Context, points []*DataPoint) 
 
 	// 准备语句
 	stmt, err := os.getPreparedStmt(`INSERT OR REPLACE INTO market_data
-		(symbol, timestamp, open, high, low, close, volume, amount, extra)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        (symbol, timestamp, open, high, low, close, volume, amount, extra)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,9 @@ func (os *OptimizedStorage) SaveBatch(ctx context.Context, points []*DataPoint) 
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// 批量插入
 	for _, point := range points {
@@ -240,9 +242,9 @@ func (os *OptimizedStorage) GetLastTimestamp(ctx context.Context, symbol string)
 // GetRange 获取范围数据
 func (os *OptimizedStorage) GetRange(ctx context.Context, symbol string, start, end int64, limit int) ([]*DataPoint, error) {
 	query := `SELECT symbol, timestamp, open, high, low, close, volume, amount, extra
-		FROM market_data
-		WHERE symbol = ? AND timestamp >= ? AND timestamp <= ?
-		ORDER BY timestamp`
+        FROM market_data
+        WHERE symbol = ? AND timestamp >= ? AND timestamp <= ?
+        ORDER BY timestamp`
 
 	if limit > 0 {
 		query += fmt.Sprintf(" LIMIT %d", limit)
@@ -277,7 +279,7 @@ func (os *OptimizedStorage) GetRange(ctx context.Context, symbol string, start, 
 		}
 
 		if extraJSON.Valid && extraJSON.String != "" {
-			json.Unmarshal([]byte(extraJSON.String), &point.Extra)
+			_ = json.Unmarshal([]byte(extraJSON.String), &point.Extra)
 		}
 
 		points = append(points, point)
@@ -289,7 +291,7 @@ func (os *OptimizedStorage) GetRange(ctx context.Context, symbol string, start, 
 // SaveQualityIssue 保存质量问题
 func (os *OptimizedStorage) SaveQualityIssue(ctx context.Context, issue QualityIssue) error {
 	query := `INSERT INTO data_quality (symbol, timestamp, issue_type, severity, message)
-		VALUES (?, ?, ?, ?, ?)`
+        VALUES (?, ?, ?, ?, ?)`
 
 	_, err := os.db.ExecContext(ctx, query,
 		issue.Symbol,

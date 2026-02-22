@@ -143,7 +143,7 @@ func SaveKLine(kline market.KLine) error {
         VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		kline.Symbol, kline.Open, kline.High, kline.Low, kline.Close, kline.Volume, kline.Timestamp)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 
@@ -152,7 +152,7 @@ func SaveKLine(kline market.KLine) error {
         VALUES (?, ?, ?, ?, ?, ?)`,
 		kline.Symbol, kline.Indicators.MA5, kline.Indicators.MA20, kline.Indicators.RSI, kline.Indicators.MACD, kline.Timestamp)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 

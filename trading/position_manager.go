@@ -37,7 +37,9 @@ func NewPositionManager(connector *BrokerConnector) *PositionManager {
 	}
 
 	// 初始加载持仓
-	pm.syncPositions()
+	if err := pm.syncPositions(); err != nil {
+		log.Printf("初始持仓同步失败: %v", err)
+	}
 
 	return pm
 }

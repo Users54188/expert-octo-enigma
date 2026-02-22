@@ -115,7 +115,9 @@ func (c *Cache) GetStockIndustry(symbol string) (*IndustryInfo, bool) {
 
 	// 检查缓存过期，异步重载
 	if c.IsExpired() && !c.autoReload {
-		go c.Reload()
+		go func() {
+			_ = c.Reload()
+		}()
 	}
 
 	info, exists := c.symbolMap[symbol]

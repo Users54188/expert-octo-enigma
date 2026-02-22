@@ -29,7 +29,9 @@ func TestOrderManager_SubmitOrder(t *testing.T) {
 	}
 
 	mgr := NewOrderManager(nil, nil, nil, nil, config)
-	mgr.Start()
+	if err := mgr.Start(); err != nil {
+		t.Fatalf("failed to start order manager: %v", err)
+	}
 	defer mgr.Stop()
 
 	order := &Order{
@@ -256,7 +258,9 @@ func BenchmarkOrderManager_SubmitOrder(b *testing.B) {
 	}
 
 	mgr := NewOrderManager(nil, nil, nil, nil, config)
-	mgr.Start()
+	if err := mgr.Start(); err != nil {
+		b.Fatalf("failed to start order manager: %v", err)
+	}
 	defer mgr.Stop()
 
 	ctx := context.Background()
@@ -270,6 +274,8 @@ func BenchmarkOrderManager_SubmitOrder(b *testing.B) {
 			Quantity: 1000,
 			Price:    10.50,
 		}
-		mgr.SubmitOrder(ctx, order)
+		if _, err := mgr.SubmitOrder(ctx, order); err != nil {
+			b.Fatalf("failed to submit order: %v", err)
+		}
 	}
 }
