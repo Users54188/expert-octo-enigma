@@ -740,7 +740,7 @@ func startRiskMonitor(riskManager *trading.RiskManager, orderExecutor *trading.O
 
 		if err == nil && len(stopLossSymbols) > 0 {
 			log.Printf("Stop loss triggered for %d symbols", len(stopLossSymbols))
-			for _, _ := range stopLossSymbols {
+			for range stopLossSymbols {
 				ctx, cancel = contextWithTimeout(30 * time.Second)
 				_ = orderExecutor.SyncTrades(ctx)
 				cancel()
