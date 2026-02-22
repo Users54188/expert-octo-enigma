@@ -133,7 +133,9 @@ func (bc *BrokerConnector) Disconnect() error {
 // Reconnect 重新连接
 func (bc *BrokerConnector) Reconnect() error {
 	log.Println("尝试重新连接券商...")
-	bc.Disconnect()
+	if err := bc.Disconnect(); err != nil {
+		log.Printf("断开连接时出错: %v", err)
+	}
 	return bc.Connect()
 }
 

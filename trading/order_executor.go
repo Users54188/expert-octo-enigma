@@ -127,7 +127,9 @@ func (oe *OrderExecutor) ExecuteCancel(ctx context.Context, orderID string) erro
 
 	// 更新订单状态
 	if oe.tradeHistory != nil {
-		oe.tradeHistory.UpdateOrderStatus(orderID, "已撤")
+		if err := oe.tradeHistory.UpdateOrderStatus(orderID, "已撤"); err != nil {
+			log.Printf("更新订单状态失败: %v", err)
+		}
 	}
 
 	return nil
