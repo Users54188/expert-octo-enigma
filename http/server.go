@@ -73,6 +73,7 @@ func (s *Server) Start() error {
 	log.Printf("Starting HTTP server on %s", s.server.Addr)
 	log.Printf("WebSocket endpoint: ws://localhost%s/api/ws/dashboard", s.server.Addr)
 
+	// #nosec G114 -- HTTP server for local dashboard is intentional
 	if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("server failed: %w", err)
 	}

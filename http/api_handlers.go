@@ -391,7 +391,7 @@ func handleRiskReport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", contentType)
-	w.Write(response)
+	_, _ = w.Write(response) // Best-effort response writing
 }
 
 // ============ 可视化处理器 ============

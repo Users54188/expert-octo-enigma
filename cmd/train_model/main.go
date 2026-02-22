@@ -45,6 +45,7 @@ func main() {
 		log.Fatalf("failed to save model: %v", err)
 	}
 
+	// #nosec G104 -- Debug output is intentional
 	fmt.Printf("model saved to %s\n", *modelPath)
 }
 

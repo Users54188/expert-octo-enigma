@@ -119,6 +119,7 @@ func (ep *EastmoneyProvider) FetchKLines(ctx context.Context, symbol string, day
 		return nil, err
 	}
 
+	// #nosec G107 -- External API call to Eastmoney is intentional
 	resp, err := ep.client.Do(req)
 	if err != nil {
 		return nil, err

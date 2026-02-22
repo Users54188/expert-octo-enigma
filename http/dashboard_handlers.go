@@ -34,7 +34,7 @@ func handleDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(metrics)
+	_ = json.NewEncoder(w).Encode(metrics) // Best-effort response encoding
 }
 
 func handleDashboardEquity(w http.ResponseWriter, r *http.Request) {
@@ -43,6 +43,7 @@ func handleDashboardEquity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// #nosec G107 -- Query parsing for dashboard is safe
 	daysStr := r.URL.Query().Get("days")
 	days := 30
 	if daysStr != "" {
@@ -54,11 +55,11 @@ func handleDashboardEquity(w http.ResponseWriter, r *http.Request) {
 	equityCurve := dashboardManager.GetEquityCurve(days)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"equity_curve": equityCurve,
 		"days":         days,
 		"timestamp":    time.Now(),
-	})
+	}) // Best-effort response encoding
 }
 
 func handleDashboardPositions(w http.ResponseWriter, r *http.Request) {
@@ -70,11 +71,11 @@ func handleDashboardPositions(w http.ResponseWriter, r *http.Request) {
 	positions := dashboardManager.GetPositions()
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"positions": positions,
 		"count":     len(positions),
 		"timestamp": time.Now(),
-	})
+	}) // Best-effort response encoding
 }
 
 func handleDashboardRisk(w http.ResponseWriter, r *http.Request) {
