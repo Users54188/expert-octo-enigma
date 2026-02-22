@@ -33,7 +33,9 @@ func TestHealthHandler(t *testing.T) {
 func TestMain(m *testing.M) {
 	// Setup
 	dbPath := "./test.db"
-	db.InitDB(dbPath)
+	if err := db.InitDB(dbPath); err != nil {
+		panic(err)
+	}
 
 	code := m.Run()
 

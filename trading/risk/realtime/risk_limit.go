@@ -99,7 +99,9 @@ func (m *RiskLimitManager) initDefaultLimits() {
 	}
 
 	for _, config := range defaultLimits {
-		m.AddLimit(config)
+		if err := m.AddLimit(config); err != nil {
+			log.Printf("Failed to add risk limit %s: %v", config.Name, err)
+		}
 	}
 }
 

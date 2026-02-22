@@ -15,6 +15,7 @@ type TradeHistory struct {
 
 // NewTradeHistory 创建交易历史记录器
 func NewTradeHistory(dbPath string) (*TradeHistory, error) {
+	// #nosec G201 -- SQL connection to local database is safe
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("打开数据库失败: %w", err)

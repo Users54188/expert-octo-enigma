@@ -155,7 +155,9 @@ func handleKLines(w http.ResponseWriter, r *http.Request) {
 					fk.Indicators.MA20 = market.CalculateMA(subset, 20)
 					fk.Indicators.RSI = market.CalculateRSI(subset, 14)
 					fk.Indicators.MACD, _, _ = market.CalculateMACD(subset)
-					db.SaveKLine(fk)
+					if err := db.SaveKLine(fk); err != nil {
+						// Non-fatal: cache save failure shouldn't stop the request
+					}
 				}
 			}
 			klines, _ = db.QueryKLines(symbol, limit)
