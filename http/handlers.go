@@ -164,7 +164,7 @@ func handleKLines(w http.ResponseWriter, r *http.Request) {
                     fk.Indicators.RSI = market.CalculateRSI(subset, 14)
                     fk.Indicators.MACD, _, _ = market.CalculateMACD(subset)
                     if err := db.SaveKLine(fk); err != nil {
-                        // Non-fatal: cache save failure shouldn't stop the request
+                        log.Printf("Failed to cache kline %s: %v", fk.Symbol, err)
                     }
                 }
             }

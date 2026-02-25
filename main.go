@@ -210,7 +210,6 @@ var (
     taskScheduler    *scheduler.Scheduler
     monitor          *monitoring.RealtimeMonitor
     alertSystem      *monitoring.AlertSystem
-    backtestEngine   *backtest.BacktestEngine
     llmAnalyzer      *llm.DeepSeekAnalyzer
 
     // 传统交易组件
@@ -220,10 +219,6 @@ var (
     positionManager *trading.PositionManager
     orderExecutor   *trading.OrderExecutor
     signalHandler   *trading.SignalHandler
-
-    // 风险管理组件
-    aiRisk *risk.AIRisk
-
 )
 
 func main() {
@@ -513,7 +508,7 @@ func initializePortfolioSystem(config *Config) {
             SentimentAnalysis: config.Trading.AIRisk.SentimentAnalysis,
             NewsAnalysis:      config.Trading.AIRisk.NewsAnalysis,
         }
-        aiRisk = risk.NewAIRisk(aiRiskConfig, llmAnalyzer, positionManager)
+        _ = risk.NewAIRisk(aiRiskConfig, llmAnalyzer, positionManager)
     }
 
     log.Println("Portfolio management system initialized")
@@ -552,7 +547,7 @@ func initializeBacktestSystem(config *Config) {
         })
     }
 
-    backtestEngine = backtest.NewBacktestEngine(backtestConfig)
+    _ = backtest.NewBacktestEngine(backtestConfig)
 
     log.Println("Backtest system initialized")
 }
@@ -640,12 +635,6 @@ func initializeLegacyTradingSystem(config *Config) {
             go startRiskMonitor(riskManager, orderExecutor)
         }
     }
-}
-
-// 现有的函数保持不变
-func initializeTradingSystem(config *Config) {
-    // 这个函数现在由 initializeLegacyTradingSystem 替代
-    initializeLegacyTradingSystem(config)
 }
 
 func startRiskMonitor(riskManager *trading.RiskManager, orderExecutor *trading.OrderExecutor) {
