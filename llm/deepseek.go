@@ -1,49 +1,49 @@
 package llm
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"net/http"
-	"strings"
-	"time"
+    "bytes"
+    "context"
+    "encoding/json"
+    "errors"
+    "fmt"
+    "net/http"
+    "strings"
+    "time"
 
-	"cloudquant/market"
+    "cloudquant/market"
 )
 
 type DeepSeekAnalyzer struct {
-	apiKey    string
-	model     string
-	client    *http.Client
-	baseURL   string
-	maxTokens int
+    apiKey    string
+    model     string
+    client    *http.Client
+    baseURL   string
+    maxTokens int
 }
 
 type AnalysisResult struct {
-	Symbol string `json:"symbol"`
-	Trend  string `json:"trend"`
-	Risk   string `json:"risk"`
-	Action string `json:"action"`
-	Reason string `json:"reason"`
+    Symbol string `json:"symbol"`
+    Trend  string `json:"trend"`
+    Risk   string `json:"risk"`
+    Action string `json:"action"`
+    Reason string `json:"reason"`
 }
 
 func NewDeepSeekAnalyzer(apiKey, model string, timeout time.Duration, maxTokens int) *DeepSeekAnalyzer {
-	if timeout <= 0 {
-		timeout = 10 * time.Second
-	}
-	return &DeepSeekAnalyzer{
-		apiKey:    apiKey,
-		model:     model,
-		client:    &http.Client{Timeout: timeout},
-		baseURL:   "https://api.deepseek.com/chat/completions",
-		maxTokens: maxTokens,
-	}
+    if timeout <= 0 {
+        timeout = 10 * time.Second
+    }
+    return &DeepSeekAnalyzer{
+        apiKey:    apiKey,
+        model:     model,
+        client:    &http.Client{Timeout: timeout},
+        baseURL:   "https://api.deepseek.com/chat/completions",
+        maxTokens: maxTokens,
+    }
 }
 
 func (d *DeepSeekAnalyzer) Analyze(ctx context.Context, kline market.KLine, indicator market.Indicator) (*AnalysisResult, error) {
-	prompt := fmt.Sprintf(`你是一个A股量化交易分析师。基于以下数据分析市场：
+    prompt := fmt.Sprintf(`你是一个A股量化交易分析师。基于以下数据分析市场：
 
 股票代码: %s
 当前价格: %.4f
@@ -69,113 +69,114 @@ func (d *DeepSeekAnalyzer) Analyze(ctx context.Context, kline market.KLine, indi
 }
 `, kline.Symbol, kline.Close, kline.Volume, indicator.MA5, indicator.MA20, indicator.RSI, indicator.MACD)
 
-	content, err := d.AnalyzePrompt(ctx, prompt)
-	if err != nil {
-		return nil, err
-	}
+    content, err := d.AnalyzePrompt(ctx, prompt)
+    if err != nil {
+        return nil, err
+    }
 
-	result, err := parseAnalysisResult(content)
-	if err != nil {
-		return nil, err
-	}
-	result.Symbol = kline.Symbol
-	return result, nil
+    result, err := parseAnalysisResult(content)
+    if err != nil {
+        return nil, err
+    }
+    result.Symbol = kline.Symbol
+    return result, nil
 }
 
 func (d *DeepSeekAnalyzer) AnalyzePrompt(ctx context.Context, prompt string) (string, error) {
-	if d == nil || d.client == nil {
-		return "", errors.New("deepseek analyzer not configured")
-	}
-	if d.apiKey == "" {
-		return "", errors.New("deepseek api key is required")
-	}
-	if d.model == "" {
-		d.model = "deepseek-chat"
-	}
+    if d == nil || d.client == nil {
+        return "", errors.New("deepseek analyzer not configured")
+    }
+    if d.apiKey == "" {
+        return "", errors.New("deepseek api key is required")
+    }
+    if d.model == "" {
+        d.model = "deepseek-chat"
+    }
 
-	requestBody := deepSeekRequest{
-		Model: d.model,
-		Messages: []deepSeekMessage{{
-			Role:    "user",
-			Content: prompt,
-		}},
-		MaxTokens:   d.maxTokens,
-		Temperature: 0.2,
-	}
-	payload, err := json.Marshal(requestBody)
-	if err != nil {
-		return "", err
-	}
+    requestBody := deepSeekRequest{
+        Model: d.model,
+        Messages: []deepSeekMessage{{
+            Role:    "user",
+            Content: prompt,
+        }},
+        MaxTokens:   d.maxTokens,
+        Temperature: 0.2,
+    }
+    payload, err := json.Marshal(requestBody)
+    if err != nil {
+        return "", err
+    }
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, d.baseURL, bytes.NewReader(payload))
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.apiKey))
-	req.Header.Set("Content-Type", "application/json")
+    req, err := http.NewRequestWithContext(ctx, http.MethodPost, d.baseURL, bytes.NewReader(payload))
+    if err != nil {
+        return "", err
+    }
+    req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.apiKey))
+    req.Header.Set("Content-Type", "application/json")
 
-	resp, err := d.client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
+    // #nosec G107 -- External API call to DeepSeek is intentional and uses configured timeout
+    resp, err := d.client.Do(req)
+    if err != nil {
+        return "", err
+    }
+    defer resp.Body.Close()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		var apiErr deepSeekErrorResponse
-		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err == nil && apiErr.Error.Message != "" {
-			return "", fmt.Errorf("deepseek api error: %s", apiErr.Error.Message)
-		}
-		return "", fmt.Errorf("deepseek api returned status %d", resp.StatusCode)
-	}
+    if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+        var apiErr deepSeekErrorResponse
+        if err := json.NewDecoder(resp.Body).Decode(&apiErr); err == nil && apiErr.Error.Message != "" {
+            return "", fmt.Errorf("deepseek api error: %s", apiErr.Error.Message)
+        }
+        return "", fmt.Errorf("deepseek api returned status %d", resp.StatusCode)
+    }
 
-	var apiResp deepSeekResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
-		return "", err
-	}
-	if len(apiResp.Choices) == 0 {
-		return "", errors.New("deepseek api returned empty response")
-	}
-	return cleanDeepSeekContent(apiResp.Choices[0].Message.Content), nil
+    var apiResp deepSeekResponse
+    if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+        return "", err
+    }
+    if len(apiResp.Choices) == 0 {
+        return "", errors.New("deepseek api returned empty response")
+    }
+    return cleanDeepSeekContent(apiResp.Choices[0].Message.Content), nil
 }
 
 type deepSeekMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+    Role    string `json:"role"`
+    Content string `json:"content"`
 }
 
 type deepSeekRequest struct {
-	Model       string            `json:"model"`
-	Messages    []deepSeekMessage `json:"messages"`
-	MaxTokens   int               `json:"max_tokens,omitempty"`
-	Temperature float64           `json:"temperature,omitempty"`
+    Model       string            `json:"model"`
+    Messages    []deepSeekMessage `json:"messages"`
+    MaxTokens   int               `json:"max_tokens,omitempty"`
+    Temperature float64           `json:"temperature,omitempty"`
 }
 
 type deepSeekResponse struct {
-	Choices []struct {
-		Message deepSeekMessage `json:"message"`
-	} `json:"choices"`
+    Choices []struct {
+        Message deepSeekMessage `json:"message"`
+    } `json:"choices"`
 }
 
 type deepSeekErrorResponse struct {
-	Error struct {
-		Message string `json:"message"`
-	} `json:"error"`
+    Error struct {
+        Message string `json:"message"`
+    } `json:"error"`
 }
 
 func cleanDeepSeekContent(content string) string {
-	trimmed := strings.TrimSpace(content)
-	trimmed = strings.TrimPrefix(trimmed, "```json")
-	trimmed = strings.TrimPrefix(trimmed, "```")
-	trimmed = strings.TrimSuffix(trimmed, "```")
-	return strings.TrimSpace(trimmed)
+    trimmed := strings.TrimSpace(content)
+    trimmed = strings.TrimPrefix(trimmed, "```json")
+    trimmed = strings.TrimPrefix(trimmed, "```")
+    trimmed = strings.TrimSuffix(trimmed, "```")
+    return strings.TrimSpace(trimmed)
 }
 
 func parseAnalysisResult(content string) (*AnalysisResult, error) {
-	trimmed := cleanDeepSeekContent(content)
+    trimmed := cleanDeepSeekContent(content)
 
-	var result AnalysisResult
-	if err := json.Unmarshal([]byte(trimmed), &result); err != nil {
-		return nil, err
-	}
-	return &result, nil
+    var result AnalysisResult
+    if err := json.Unmarshal([]byte(trimmed), &result); err != nil {
+        return nil, err
+    }
+    return &result, nil
 }
