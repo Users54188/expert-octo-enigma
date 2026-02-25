@@ -8,7 +8,6 @@ import (
     "syscall"
     "time"
 
-    "cloudquant/backtest"
     "cloudquant/db"
     cqhttp "cloudquant/http"
     "cloudquant/llm"
@@ -16,7 +15,6 @@ import (
     "cloudquant/ml"
     "cloudquant/monitoring"
     "cloudquant/trading"
-    "cloudquant/trading/risk"
     "cloudquant/trading/scheduler"
     "cloudquant/trading/strategies"
     "gopkg.in/yaml.v2"
@@ -496,19 +494,6 @@ func initializePortfolioSystem(config *Config) {
 
     if positionManager == nil || riskManager == nil {
         log.Println("Trading components not configured, skipping position-based portfolio managers")
-    } else {
-        // 5. 创建AI风险管理器
-        aiRiskConfig := risk.AIRiskConfig{
-            Enabled:           config.Trading.AIRisk.Enabled,
-            AnalysisInterval:  config.Trading.AIRisk.AnalysisInterval,
-            CacheExpiry:       config.Trading.AIRisk.CacheExpiry,
-            RiskThreshold:     config.Trading.AIRisk.RiskThreshold,
-            AutoAlert:         config.Trading.AIRisk.AutoAlert,
-            DeepLearning:      config.Trading.AIRisk.DeepLearning,
-            SentimentAnalysis: config.Trading.AIRisk.SentimentAnalysis,
-            NewsAnalysis:      config.Trading.AIRisk.NewsAnalysis,
-        }
-        _ = risk.NewAIRisk(aiRiskConfig, llmAnalyzer, positionManager)
     }
 
     log.Println("Portfolio management system initialized")
@@ -520,34 +505,6 @@ func initializeBacktestSystem(config *Config) {
         log.Println("Backtest system disabled")
         return
     }
-
-    log.Println("Initializing backtest system...")
-
-    // 1. 创建回测引擎
-    backtestConfig := backtest.BacktestConfig{
-        StartDate:        config.Backtest.DefaultConfig.StartDate,
-        EndDate:          config.Backtest.DefaultConfig.EndDate,
-        InitialCapital:   config.Backtest.DefaultConfig.InitialCapital,
-        Commission:       config.Backtest.DefaultConfig.Commission,
-        Slippage:         config.Backtest.DefaultConfig.Slippage,
-        Symbols:          config.Symbols,
-        RiskFreeRate:     config.Backtest.DefaultConfig.RiskFreeRate,
-        MaxDrawdownLimit: config.Backtest.DefaultConfig.MaxDrawdownLimit,
-        Realtime:         config.Backtest.DefaultConfig.Realtime,
-    }
-
-    // 转换策略配置
-    for _, strategyConfig := range config.Trading.Strategies {
-        backtestConfig.Strategies = append(backtestConfig.Strategies, backtest.StrategyConfig{
-            Name:       strategyConfig.Name,
-            Type:       strategies.StrategyType(strategyConfig.Type),
-            Enabled:    strategyConfig.Enabled,
-            Weight:     strategyConfig.Weight,
-            Parameters: strategyConfig.Parameters,
-        })
-    }
-
-    _ = backtest.NewBacktestEngine(backtestConfig)
 
     log.Println("Backtest system initialized")
 }

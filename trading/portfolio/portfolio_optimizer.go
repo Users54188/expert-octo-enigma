@@ -366,11 +366,8 @@ func (p *PortfolioOptimizer) calculatePortfolioMetrics(weights map[string]float6
 func (p *PortfolioOptimizer) estimateMaxDrawdown(weights map[string]float64, assetData []*AssetData) float64 {
     // 简化实现：基于历史最大回撤的加权平均
     var maxDrawdown float64
-    var totalWeight float64
 
     for symbol, weight := range weights {
-        totalWeight += weight
-
         // 查找资产的历史最大回撤
         var assetMaxDD float64
         for _, asset := range assetData {
