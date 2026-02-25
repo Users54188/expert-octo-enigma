@@ -16,7 +16,6 @@ import (
     "cloudquant/ml"
     "cloudquant/monitoring"
     "cloudquant/trading"
-    "cloudquant/trading/portfolio"
     "cloudquant/trading/risk"
     "cloudquant/trading/scheduler"
     "cloudquant/trading/strategies"
@@ -211,10 +210,7 @@ var (
     taskScheduler    *scheduler.Scheduler
     monitor          *monitoring.RealtimeMonitor
     alertSystem      *monitoring.AlertSystem
-    portfolioManager *portfolio.PortfolioManager
-    optimizer        *portfolio.PortfolioOptimizer
     backtestEngine   *backtest.BacktestEngine
-    parameterSearch  *backtest.ParameterSearch
     llmAnalyzer      *llm.DeepSeekAnalyzer
 
     // 传统交易组件
@@ -226,10 +222,7 @@ var (
     signalHandler   *trading.SignalHandler
 
     // 风险管理组件
-    portfolioRisk  *risk.PortfolioRisk
-    volatilityRisk *risk.VolatilityRisk
-    cooldownRisk   *risk.CooldownRisk
-    aiRisk         *risk.AIRisk
+    aiRisk *risk.AIRisk
 
 )
 
@@ -509,24 +502,6 @@ func initializePortfolioSystem(config *Config) {
     if positionManager == nil || riskManager == nil {
         log.Println("Trading components not configured, skipping position-based portfolio managers")
     } else {
-        // 2. 创建组合风险管理器
-        portfolioRiskConfig := risk.PortfolioRiskConfig{
-            MaxIndustryExposure: config.Trading.PortfolioRisk.MaxIndustryExposure,
-            MaxSectorExposure:   config.Trading.PortfolioRisk.MaxSectorExposure,
-            MaxSymbolExposure:   config.Trading.PortfolioRisk.MaxSymbolExposure,
-            ConcentrationAlert:  config.Trading.PortfolioRisk.ConcentrationAlert,
-        }
-        portfolioRisk = risk.NewPortfolioRisk(portfolioRiskConfig, positionManager)
-
-        // 3. 创建波动率风险管理器
-        volatilityRiskConfig := risk.VolatilityRiskConfig{
-            MaxVolatility:       config.Trading.VolatilityRisk.MaxVolatility,
-            VolatilityThreshold: config.Trading.VolatilityRisk.VolatilityThreshold,
-            LookbackPeriod:      config.Trading.VolatilityRisk.LookbackPeriod,
-            AdjustmentFactor:    config.Trading.VolatilityRisk.AdjustmentFactor,
-        }
-        volatilityRisk = risk.NewVolatilityRisk(volatilityRiskConfig, positionManager)
-
         // 5. 创建AI风险管理器
         aiRiskConfig := risk.AIRiskConfig{
             Enabled:           config.Trading.AIRisk.Enabled,
@@ -539,44 +514,7 @@ func initializePortfolioSystem(config *Config) {
             NewsAnalysis:      config.Trading.AIRisk.NewsAnalysis,
         }
         aiRisk = risk.NewAIRisk(aiRiskConfig, llmAnalyzer, positionManager)
-
-        // 6. 创建组合管理器
-        portfolioConfig := portfolio.PortfolioConfig{
-            RebalanceFrequency: config.Trading.Portfolio.RebalanceFrequency,
-            MaxTurnover:        config.Trading.Portfolio.MaxTurnover,
-            MinPositionWeight:  config.Trading.Portfolio.MinPositionWeight,
-            MaxPositionWeight:  config.Trading.Portfolio.MaxPositionWeight,
-            TargetReturn:       config.Trading.Portfolio.TargetReturn,
-            RiskFreeRate:       config.Trading.Portfolio.RiskFreeRate,
-        }
-        portfolioManager = portfolio.NewPortfolioManager(portfolioConfig, positionManager, riskManager)
     }
-
-    // 4. 创建交易冷却风险管理器
-    if tradeHistory == nil {
-        log.Println("Trade history not configured, cooldown risk disabled")
-    } else {
-        cooldownRiskConfig := risk.CooldownRiskConfig{
-            MinTradeInterval:  config.Trading.CooldownRisk.MinTradeInterval,
-            MaxDailyTrades:    config.Trading.CooldownRisk.MaxDailyTrades,
-            MinOrderInterval:  config.Trading.CooldownRisk.MinOrderInterval,
-            MaxWeeklyTrades:   config.Trading.CooldownRisk.MaxWeeklyTrades,
-            BlacklistDuration: config.Trading.CooldownRisk.BlacklistDuration,
-            EnableCooldown:    config.Trading.CooldownRisk.EnableCooldown,
-        }
-        cooldownRisk = risk.NewCooldownRisk(cooldownRiskConfig, tradeHistory)
-    }
-
-    // 7. 创建组合优化器
-    optimizerConfig := portfolio.OptimizerConfig{
-        Method:          config.Trading.Optimizer.Method,
-        RiskFreeRate:    config.Trading.Optimizer.RiskFreeRate,
-        LookbackPeriod:  config.Trading.Optimizer.LookbackPeriod,
-        MinWeight:       config.Trading.Optimizer.MinWeight,
-        MaxWeight:       config.Trading.Optimizer.MaxWeight,
-        RebalancePeriod: config.Trading.Optimizer.RebalancePeriod,
-    }
-    optimizer = portfolio.NewPortfolioOptimizer(optimizerConfig)
 
     log.Println("Portfolio management system initialized")
 }
@@ -615,21 +553,6 @@ func initializeBacktestSystem(config *Config) {
     }
 
     backtestEngine = backtest.NewBacktestEngine(backtestConfig)
-
-    // 2. 创建参数搜索器
-    searchConfig := backtest.SearchConfig{
-        Method:        config.Backtest.ParameterSearch.Method,
-        Metric:        config.Backtest.ParameterSearch.Metric,
-        MaxIterations: config.Backtest.ParameterSearch.MaxIterations,
-        MinSamples:    config.Backtest.ParameterSearch.MinSamples,
-        Parallel:      config.Backtest.ParameterSearch.Parallel,
-        MaxWorkers:    config.Backtest.ParameterSearch.MaxWorkers,
-        EarlyStopping: config.Backtest.ParameterSearch.EarlyStopping,
-        Patience:      config.Backtest.ParameterSearch.Patience,
-        Parameters:    make(map[string]backtest.ParameterConfig),
-    }
-
-    parameterSearch = backtest.NewParameterSearch(searchConfig, backtestEngine)
 
     log.Println("Backtest system initialized")
 }
