@@ -424,10 +424,7 @@ func (m *StrategyManager) ProcessSignals(ctx context.Context, signals []*Signal)
             continue
         }
 
-        // 检查风险
-        if m.riskManager != nil {
-            // 可以在这里进行信号级别的风险检查
-        }
+        // 检查风险 - future: add signal-level risk checking when m.riskManager != nil
 
         // 发送到信号处理器
         ctxWithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
