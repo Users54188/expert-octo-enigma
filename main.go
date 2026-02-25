@@ -12,7 +12,6 @@ import (
     "cloudquant/db"
     cqhttp "cloudquant/http"
     "cloudquant/llm"
-    "cloudquant/market"
     "cloudquant/market/industry"
     "cloudquant/ml"
     "cloudquant/monitoring"
