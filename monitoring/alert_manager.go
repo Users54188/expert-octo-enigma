@@ -63,13 +63,14 @@ type RateLimit struct {
 
 // AlertSystem 告警系统
 type AlertSystem struct {
-	mu         sync.RWMutex
-	alerts     map[string]*Alert        // 告警ID -> 告警
-	channels   map[string]*AlertChannel // 渠道名称 -> 渠道配置
-	httpClient *http.Client
-	templates  map[string]string      // 模板名称 -> 模板内容
-	rateLimits map[string]RateTracker // 限流追踪
-	stats      *AlertStats
+	mu          sync.RWMutex
+	alerts      map[string]*Alert // 告警ID -> 告警
+	channels    map[string]*AlertChannel // 渠道名称 -> 渠道配置
+	httpClient  *http.Client
+	templates   map[string]string // 模板名称 -> 模板内容
+	rateLimits  map[string]*RateTracker // 限流追踪
+	rateMu      sync.Mutex              // 保护 rateLimits 的独立锁，与 a.mu 解耦避免死锁
+	stats       *AlertStats
 }
 
 // AlertStats 告警统计
@@ -99,7 +100,7 @@ func NewAlertSystem() *AlertSystem {
 		channels:   make(map[string]*AlertChannel),
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 		templates:  make(map[string]string),
-		rateLimits: make(map[string]RateTracker),
+		rateLimits: make(map[string]*RateTracker),
 		stats: &AlertStats{
 			ByLevel:   make(map[AlertLevel]int64),
 			ByChannel: make(map[string]int64),
@@ -213,9 +214,12 @@ func (a *AlertSystem) matchesFilter(alert *Alert, filter AlertFilter) bool {
 
 // checkRateLimit 检查限流
 func (a *AlertSystem) checkRateLimit(channelType string) bool {
+	a.rateMu.Lock()
+	defer a.rateMu.Unlock()
+
 	tracker, exists := a.rateLimits[channelType]
 	if !exists {
-		tracker = RateTracker{
+		tracker = &RateTracker{
 			hourReset: time.Now().Truncate(time.Hour),
 			dayReset:  time.Now().Truncate(24 * time.Hour),
 		}
@@ -252,7 +256,6 @@ func (a *AlertSystem) checkRateLimit(channelType string) bool {
 	tracker.hourCount++
 	tracker.dayCount++
 	tracker.lastSent = now
-	a.rateLimits[channelType] = tracker
 
 	return true
 }

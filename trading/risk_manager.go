@@ -147,6 +147,7 @@ func (rm *RiskManager) checkBuyOrder(ctx context.Context, order OrderRequest) er
 }
 
 // checkDailyLoss 检查单日亏损
+// 注意：调用方可能持有 RLock，本方法不再加锁，由调用方保证线程安全
 func (rm *RiskManager) checkDailyLoss(ctx context.Context) error {
 	balance, err := rm.connector.GetCachedBalance()
 	if err != nil {
@@ -162,9 +163,11 @@ func (rm *RiskManager) checkDailyLoss(ctx context.Context) error {
 
 	// 如果亏损超过阈值，触发紧急平仓
 	if lossPercent < -rm.config.MaxDailyLoss {
+		rm.mu.RUnlock()
 		rm.mu.Lock()
 		rm.emergencyStop = true
 		rm.mu.Unlock()
+		rm.mu.RLock()
 
 		log.Printf("警告：单日亏损 %.2f%% 超过阈值 %.2f%%，触发紧急平仓", lossPercent*100, rm.config.MaxDailyLoss*100)
 
@@ -377,7 +380,7 @@ type OrderRequest struct {
 	Type   string  `json:"type"`
 	Symbol string  `json:"symbol"`
 	Price  float64 `json:"price"`
-	Amount int     `json:"amount"` // 金额（元）
+	Amount float64 `json:"amount"` // 金额（元）
 }
 
 // 计算订单数量

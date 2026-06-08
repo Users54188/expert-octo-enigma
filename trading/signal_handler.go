@@ -180,6 +180,10 @@ func (sh *SignalHandler) fuseSignals(aiSignal AISignal, mlSignal MLSignal, aiSco
 
 // applyRiskFilter 应用风险过滤
 func (sh *SignalHandler) applyRiskFilter(ctx context.Context, signal *TradingSignal) *TradingSignal {
+	if signal == nil {
+		return nil
+	}
+
 	// 检查紧急停止
 	if sh.riskManager != nil {
 		metrics := sh.riskManager.GetRiskMetrics()
@@ -191,10 +195,19 @@ func (sh *SignalHandler) applyRiskFilter(ctx context.Context, signal *TradingSig
 	}
 
 	// 检查持仓
+	if sh.positionMgr == nil {
+		return signal
+	}
+
 	if signal.Action == "buy" {
 		if sh.positionMgr.HasPosition(signal.Symbol) {
 			// 已有持仓，考虑是否加仓
-			pos, _ := sh.positionMgr.GetPosition(signal.Symbol)
+			pos, err := sh.positionMgr.GetPosition(signal.Symbol)
+			if err != nil || pos == nil {
+				signal.Action = "hold"
+				signal.Reason += " [持仓查询失败]"
+				return signal
+			}
 			if pos.UnrealizedPnL > 0 {
 				// 盈利状态，可以考虑加仓
 				signal.Reason += " [持仓盈利,考虑加仓]"
@@ -208,10 +221,9 @@ func (sh *SignalHandler) applyRiskFilter(ctx context.Context, signal *TradingSig
 
 	// 检查止损
 	if signal.Action == "sell" && sh.positionMgr.HasPosition(signal.Symbol) {
-		pos, _ := sh.positionMgr.GetPosition(signal.Symbol)
-		if pos.UnrealizedPnL < 0 {
+		pos, err := sh.positionMgr.GetPosition(signal.Symbol)
+		if err == nil && pos != nil && pos.UnrealizedPnL < 0 {
 			// 亏损状态，优先执行止损
-			signal.Action = "sell"
 			signal.Reason += " [止损优先]"
 		}
 	}
@@ -241,7 +253,10 @@ func (sh *SignalHandler) ExecuteSignal(ctx context.Context, signal *TradingSigna
 		if !sh.positionMgr.HasPosition(signal.Symbol) {
 			return "", fmt.Errorf("无持仓，无法卖出")
 		}
-		pos, _ := sh.positionMgr.GetPosition(signal.Symbol)
+		pos, err := sh.positionMgr.GetPosition(signal.Symbol)
+		if err != nil || pos == nil {
+			return "", fmt.Errorf("获取持仓失败: %w", err)
+		}
 		return sh.orderExecutor.ExecuteSell(ctx, signal.Symbol, price, pos.Amount)
 
 	case "hold":

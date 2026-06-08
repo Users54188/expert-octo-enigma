@@ -10,17 +10,17 @@ import (
 
 // StrategyConfig 策略配置
 type StrategyConfig struct {
-	Name       string                 `yaml:"name"`       // 策略名称
-	Type       StrategyType           `yaml:"type"`       // 策略类型
-	Enabled    bool                   `yaml:"enabled"`    // 是否启用
-	Weight     float64                `yaml:"weight"`     // 策略权重
+	Name      string                 `yaml:"name"`      // 策略名称
+	Type      StrategyType           `yaml:"type"`      // 策略类型
+	Enabled   bool                   `yaml:"enabled"`   // 是否启用
+	Weight    float64                `yaml:"weight"`    // 策略权重
 	Parameters map[string]interface{} `yaml:"parameters"` // 策略参数
-	Priority   int                    `yaml:"priority"`   // 优先级
+	Priority  int                    `yaml:"priority"`  // 优先级
 }
 
 // StrategyLoader 策略加载器
 type StrategyLoader struct {
-	strategies map[string]Strategy              // 已注册的策略
+	strategies map[string]Strategy // 已注册的策略
 	factories  map[StrategyType]StrategyFactory // 策略工厂
 }
 
@@ -87,20 +87,12 @@ func (l *StrategyLoader) CreateStrategy(config StrategyConfig) (Strategy, error)
 	}
 
 	strategy := factory()
-
-	// 所有策略都实现了 SetWeight 和 SetEnabled 方法
-	// 通过 UpdateParameters 来设置名称和其他参数
-	baseParams := make(map[string]interface{})
-	for k, v := range config.Parameters {
-		baseParams[k] = v
-	}
-	baseParams["_name"] = config.Name
-
-	if err := strategy.UpdateParameters(baseParams); err != nil {
-		return nil, fmt.Errorf("failed to update parameters for %s: %v", config.Name, err)
-	}
+	// Initialize strategy via the Strategy interface
 	strategy.SetWeight(config.Weight)
 	strategy.SetEnabled(config.Enabled)
+	if err := strategy.UpdateParameters(config.Parameters); err != nil {
+		return nil, fmt.Errorf("failed to update parameters for %s: %v", config.Name, err)
+	}
 
 	return strategy, nil
 }
@@ -252,13 +244,13 @@ func (l *StrategyLoader) GetEnabledStrategyCount() int {
 
 // StrategySummary 策略摘要信息
 type StrategySummary struct {
-	Name        string                 `json:"name"`
-	Type        StrategyType           `json:"type"`
-	Enabled     bool                   `json:"enabled"`
-	Weight      float64                `json:"weight"`
+	Name        string      `json:"name"`
+	Type        StrategyType `json:"type"`
+	Enabled     bool        `json:"enabled"`
+	Weight      float64     `json:"weight"`
 	Parameters  map[string]interface{} `json:"parameters"`
-	CreatedAt   string                 `json:"created_at"`
-	Description string                 `json:"description"`
+	CreatedAt   string      `json:"created_at"`
+	Description string      `json:"description"`
 }
 
 // GetStrategySummary 获取策略摘要
