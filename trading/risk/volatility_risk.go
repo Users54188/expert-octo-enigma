@@ -18,7 +18,6 @@ type VolatilityRisk struct {
 	positionManager *trading.PositionManager
 	priceHistory   map[string][]PricePoint // 价格历史
 	volatilityCache map[string]float64   // 波动率缓存
-	lastCalculation time.Time
 }
 
 // PricePoint 价格点

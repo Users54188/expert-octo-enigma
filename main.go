@@ -211,10 +211,6 @@ var (
     sched              *scheduler.Scheduler
     monitor            *monitoring.RealtimeMonitor
     alertSystem        *monitoring.AlertSystem
-    portfolioManager   *portfolio.PortfolioManager
-    optimizer          *portfolio.PortfolioOptimizer
-    backtestEngine     *backtest.BacktestEngine
-    parameterSearch    *backtest.ParameterSearch
     llmAnalyzer        *llm.DeepSeekAnalyzer
 
     // 传统交易组件
@@ -224,9 +220,6 @@ var (
     positionManager *trading.PositionManager
     orderExecutor   *trading.OrderExecutor
     signalHandler   *trading.SignalHandler
-
-    // 风险管理组件
-    aiRisk *risk.AIRisk
 
 )
 
@@ -659,11 +652,6 @@ func initializeLegacyTradingSystem(config *Config) {
     }
 }
 
-// 现有的函数保持不变
-func initializeTradingSystem(config *Config) {
-    // 这个函数现在由 initializeLegacyTradingSystem 替代
-    initializeLegacyTradingSystem(config)
-}
 
 func startRiskMonitor(riskManager *trading.RiskManager, positionManager *trading.PositionManager, orderExecutor *trading.OrderExecutor) {
     ticker := time.NewTicker(1 * time.Minute)
