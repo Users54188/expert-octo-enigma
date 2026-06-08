@@ -265,7 +265,7 @@ func main() {
     <-quit
     log.Println("Shutting down...")
 
-    qhttp.CloseTradingResources()
+    cqhttp.CloseTradingResources()
 
     if err := server.Stop(); err != nil {
         log.Printf("Server forced to shutdown: %v", err)

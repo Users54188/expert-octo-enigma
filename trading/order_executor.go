@@ -202,7 +202,7 @@ func (oe *OrderExecutor) SyncTrades(ctx context.Context) error {
 				Symbol:      trade.Symbol,
 				Type:        trade.Type,
 				Price:       trade.Price,
-				Amount:      trade.Amount,
+				Volume:      int64(trade.Amount),
 				TradeTime:   trade.TradeTime,
 				Commission:  trade.Commission,
 			}); err != nil {

@@ -88,7 +88,7 @@ func (rm *RiskManager) CheckBeforeOrder(ctx context.Context, order OrderRequest)
 
 	// 检查最小下单金额
 	if float64(order.Amount) < rm.config.MinOrderAmount {
-		return fmt.Errorf("%w: 订单金额 %d 小于最小金额 %.2f", ErrMinOrderAmount, order.Amount, rm.config.MinOrderAmount)
+		return fmt.Errorf("%w: 订单金额 %.2f 小于最小金额 %.2f", ErrMinOrderAmount, order.Amount, rm.config.MinOrderAmount)
 	}
 
 	// 买单检查
@@ -117,7 +117,7 @@ func (rm *RiskManager) checkBuyOrder(ctx context.Context, order OrderRequest) er
 	// 检查单只股票最大仓位
 	maxSingleAmount := rm.config.InitialCapital * rm.config.MaxSinglePosition
 	if float64(order.Amount) > maxSingleAmount {
-		return fmt.Errorf("%w: 订单金额 %d 超过单只股票最大金额 %.2f", ErrMaxPositionExceeded, order.Amount, maxSingleAmount)
+		return fmt.Errorf("%w: 订单金额 %.2f 超过单只股票最大金额 %.2f", ErrMaxPositionExceeded, order.Amount, maxSingleAmount)
 	}
 
 	// 获取当前持仓
