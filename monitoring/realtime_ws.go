@@ -124,7 +124,8 @@ func (h *WebSocketHub) Start() {
 				select {
 				case client.send <- message:
 				default:
-					close(client.send)
+					// 客户端 send 通道满，标记移除但不 close channel
+					// writePump 会通过超时自然退出，避免双重 close panic
 					delete(h.clients, client)
 				}
 			}
@@ -182,8 +183,8 @@ func (h *WebSocketHub) Broadcast(message []byte) {
 
 // SendToClient 发送消息给特定客户端
 func (h *WebSocketHub) SendToClient(clientID string, message []byte) {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
+	h.mu.Lock()
+	defer h.mu.Unlock()
 
 	for client := range h.clients {
 		if client.clientID == clientID {

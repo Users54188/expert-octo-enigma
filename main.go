@@ -16,6 +16,7 @@ import (
     "cloudquant/ml"
     "cloudquant/monitoring"
     "cloudquant/trading"
+    "cloudquant/trading/portfolio"
     "cloudquant/trading/risk"
     "cloudquant/trading/scheduler"
     "cloudquant/trading/strategies"
@@ -205,13 +206,16 @@ type StrategyConfig struct {
 
 // 全局组件变量
 var (
-    strategyLoader   *strategies.StrategyLoader
-    strategyManager  *strategies.StrategyManager
-    taskScheduler    *scheduler.Scheduler
-    monitor          *monitoring.RealtimeMonitor
-    alertSystem      *monitoring.AlertSystem
-    backtestEngine   *backtest.BacktestEngine
-    llmAnalyzer      *llm.DeepSeekAnalyzer
+    strategyLoader     *strategies.StrategyLoader
+    strategyManager    *strategies.StrategyManager
+    sched              *scheduler.Scheduler
+    monitor            *monitoring.RealtimeMonitor
+    alertSystem        *monitoring.AlertSystem
+    portfolioManager   *portfolio.PortfolioManager
+    optimizer          *portfolio.PortfolioOptimizer
+    backtestEngine     *backtest.BacktestEngine
+    parameterSearch    *backtest.ParameterSearch
+    llmAnalyzer        *llm.DeepSeekAnalyzer
 
     // 传统交易组件
     tradeHistory    *trading.TradeHistory
@@ -261,7 +265,8 @@ func main() {
     <-quit
     log.Println("Shutting down...")
 
-    // 停止HTTP服务器
+    cqhttp.CloseTradingResources()
+
     if err := server.Stop(); err != nil {
         log.Printf("Server forced to shutdown: %v", err)
     }
@@ -372,14 +377,14 @@ func initializeMultiStrategySystem(config *Config) {
 
     // 2. 转换配置格式
     var strategyConfigs []strategies.StrategyConfig
-    for _, config := range config.Trading.Strategies {
+    for _, sc := range config.Trading.Strategies {
         strategyConfigs = append(strategyConfigs, strategies.StrategyConfig{
-            Name:       config.Name,
-            Type:       strategies.StrategyType(config.Type),
-            Enabled:    config.Enabled,
-            Weight:     config.Weight,
-            Parameters: config.Parameters,
-            Priority:   config.Priority,
+            Name:       sc.Name,
+            Type:       strategies.StrategyType(sc.Type),
+            Enabled:    sc.Enabled,
+            Weight:     sc.Weight,
+            Parameters: sc.Parameters,
+            Priority:   sc.Priority,
         })
     }
 
@@ -393,16 +398,17 @@ func initializeMultiStrategySystem(config *Config) {
     strategyManager = strategies.NewStrategyManager(strategyLoader, strategies.WeightedCombination)
 
     // 5. 创建调度器
-    if s, err := scheduler.NewScheduler(config.Trading.Scheduler.Interval); err != nil {
-        log.Printf("Failed to create scheduler: %v", err)
+    var schedErr error
+    sched, schedErr = scheduler.NewScheduler(config.Trading.Scheduler.Interval)
+    if schedErr != nil {
+        log.Printf("Failed to create scheduler: %v", schedErr)
     } else {
-        taskScheduler = s
-        taskScheduler.SetStrategyManager(strategyManager)
-        taskScheduler.SetSymbols(config.Symbols)
+        sched.SetStrategyManager(strategyManager)
+        sched.SetSymbols(config.Symbols)
 
         // 如果启用调度器，启动它
         if config.Trading.Scheduler.Enabled {
-            if err := taskScheduler.Start(); err != nil {
+            if err := sched.Start(); err != nil {
                 log.Printf("Failed to start scheduler: %v", err)
             } else {
                 log.Println("Strategy scheduler started")
@@ -515,6 +521,17 @@ func initializePortfolioSystem(config *Config) {
         }
         aiRisk = risk.NewAIRisk(aiRiskConfig, llmAnalyzer, positionManager)
     }
+
+    // 7. 创建组合优化器
+    optimizerConfig := portfolio.OptimizerConfig{
+        Method:          config.Trading.Optimizer.Method,
+        RiskFreeRate:    config.Trading.Optimizer.RiskFreeRate,
+        LookbackPeriod:  config.Trading.Optimizer.LookbackPeriod,
+        MinWeight:       config.Trading.Optimizer.MinWeight,
+        MaxWeight:       config.Trading.Optimizer.MaxWeight,
+        RebalancePeriod: config.Trading.Optimizer.RebalancePeriod,
+    }
+    optimizer = portfolio.NewPortfolioOptimizer(optimizerConfig)
 
     log.Println("Portfolio management system initialized")
 }
@@ -637,7 +654,7 @@ func initializeLegacyTradingSystem(config *Config) {
         // 10. 启动自动交易（如果启用）
         if config.Trading.AutoTrade.Enabled && brokerConnector.IsConnected() {
             log.Println("Auto trading enabled, starting monitor...")
-            go startRiskMonitor(riskManager, orderExecutor)
+            go startRiskMonitor(riskManager, positionManager, orderExecutor)
         }
     }
 }
@@ -648,7 +665,7 @@ func initializeTradingSystem(config *Config) {
     initializeLegacyTradingSystem(config)
 }
 
-func startRiskMonitor(riskManager *trading.RiskManager, orderExecutor *trading.OrderExecutor) {
+func startRiskMonitor(riskManager *trading.RiskManager, positionManager *trading.PositionManager, orderExecutor *trading.OrderExecutor) {
     ticker := time.NewTicker(1 * time.Minute)
     defer ticker.Stop()
 
@@ -659,11 +676,18 @@ func startRiskMonitor(riskManager *trading.RiskManager, orderExecutor *trading.O
         cancel()
 
         if err == nil && len(stopLossSymbols) > 0 {
-            log.Printf("Stop loss triggered for %d symbols", len(stopLossSymbols))
-            for range stopLossSymbols {
-                ctx, cancel = contextWithTimeout(30 * time.Second)
-                _ = orderExecutor.SyncTrades(ctx)
-                cancel()
+            log.Printf("Stop loss triggered for %d symbols: %v", len(stopLossSymbols), stopLossSymbols)
+            for _, symbol := range stopLossSymbols {
+                posState, err := positionManager.GetPosition(symbol)
+                if err != nil {
+                    log.Printf("Failed to get position for %s: %v", symbol, err)
+                    continue
+                }
+                ctx2, cancel2 := context.WithTimeout(context.Background(), 30*time.Second)
+                if err := orderExecutor.ExecuteStopLoss(ctx2, symbol, posState.CurrentPrice); err != nil {
+                    log.Printf("Failed to execute stop loss for %s: %v", symbol, err)
+                }
+                cancel2()
             }
         }
     }

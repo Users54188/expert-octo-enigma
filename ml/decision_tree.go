@@ -25,14 +25,16 @@ type TreeNode struct {
 	IsLeaf     bool    `json:"is_leaf"`
 }
 
-func (dt *DecisionTree) Train(features [][]float64, labels []int) error {
+func (dt *DecisionTree) Train(features [][]float64, labels []int, maxDepth int) error {
 	if len(features) == 0 || len(labels) == 0 {
 		return errors.New("features or labels empty")
 	}
 	if len(features) != len(labels) {
 		return errors.New("features and labels size mismatch")
 	}
-	maxDepth := dt.maxDepth
+	if maxDepth <= 0 {
+		maxDepth = dt.maxDepth
+	}
 	if maxDepth <= 0 {
 		maxDepth = 3
 	}
