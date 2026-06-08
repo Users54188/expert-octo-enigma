@@ -162,11 +162,6 @@ func handleIndustryBenchmark(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleIndustryCorrelation(w http.ResponseWriter, r *http.Request) {
-	period := r.URL.Query().Get("period")
-	if period == "" {
-		period = "1m"
-	}
-
 	// 模拟行业收益率历史数据
 	returns := map[string][]float64{
 		"银行":   {0.01, 0.02, -0.01, 0.015, 0.005},

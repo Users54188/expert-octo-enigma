@@ -2,6 +2,7 @@ package ml
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"cloudquant/market"
@@ -37,6 +38,9 @@ func ExtractFeatures(klines []market.KLine) ([]MLFeatures, error) {
 	}
 
 	maxPeriod := 60
+	if len(klines) < maxPeriod {
+		return nil, fmt.Errorf("insufficient klines: need at least %d, got %d", maxPeriod, len(klines))
+	}
 	features := make([]MLFeatures, 0, len(klines))
 	closes := make([]float64, len(klines))
 	volumes := make([]int64, len(klines))
