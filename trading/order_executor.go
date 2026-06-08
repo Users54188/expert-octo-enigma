@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sync"
 	"time"
 )
 
@@ -14,7 +13,6 @@ type OrderExecutor struct {
 	riskManager  *RiskManager
 	positionMgr  *PositionManager
 	tradeHistory *TradeHistory
-	mu           sync.RWMutex
 }
 
 // NewOrderExecutor 创建订单执行器
@@ -127,7 +125,7 @@ func (oe *OrderExecutor) ExecuteCancel(ctx context.Context, orderID string) erro
 
 	// 更新订单状态
 	if oe.tradeHistory != nil {
-		oe.tradeHistory.UpdateOrderStatus(orderID, "已撤")
+		_ = oe.tradeHistory.UpdateOrderStatus(orderID, "已撤")
 	}
 
 	return nil

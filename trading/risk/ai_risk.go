@@ -148,58 +148,6 @@ func (a *AIRisk) performAIRiskAnalysis(ctx context.Context, symbol string, marke
 	return score, nil
 }
 
-// buildRiskAnalysisPrompt 构建风险分析提示
-func (a *AIRisk) buildRiskAnalysisPrompt(symbol string, marketData map[string]interface{}) string {
-	prompt := fmt.Sprintf(`请对股票 %s 进行全面的风险评估分析：
-
-股票基本信息：
-- 代码: %s
-`, symbol, symbol)
-
-	// 添加市场数据
-	if data, ok := marketData["price"].(float64); ok {
-		prompt += fmt.Sprintf("- 当前价格: %.2f\n", data)
-	}
-	if data, ok := marketData["volume"].(int64); ok {
-		prompt += fmt.Sprintf("- 成交量: %d\n", data)
-	}
-	if data, ok := marketData["change_percent"].(float64); ok {
-		prompt += fmt.Sprintf("- 涨跌幅: %.2f%%\n", data)
-	}
-	if data, ok := marketData["pe_ratio"].(float64); ok {
-		prompt += fmt.Sprintf("- PE比率: %.2f\n", data)
-	}
-
-	prompt += `
-请从以下维度进行风险评估（每个维度0-1分，分数越高风险越大）：
-
-1. 市场风险 (market_risk)：整体市场环境、宏观经济因素
-2. 技术风险 (technical_risk)：技术指标、图表形态、价格走势
-3. 基本面风险 (fundamental_risk)：财务状况、行业前景、竞争地位
-4. 波动率风险 (volatility_risk)：价格波动剧烈程度
-5. 趋势风险 (trend_risk)：当前趋势方向和强度
-6. 成交量风险 (volume_risk)：成交量变化、流动性
-
-请给出：
-- 各个维度的风险评分
-- 总体风险评分（各维度加权平均）
-- 风险等级：low(0-0.25), medium(0.25-0.5), high(0.5-0.75), extreme(0.75-1.0)
-- 具体投资建议和风险控制措施
-
-请以JSON格式回复，包含字段：
-{
-  "market_risk": 0.0-1.0,
-  "technical_risk": 0.0-1.0,
-  "fundamental_risk": 0.0-1.0,
-  "volatility_risk": 0.0-1.0,
-  "trend_risk": 0.0-1.0,
-  "volume_risk": 0.0-1.0,
-  "ai_confidence": 0.0-1.0,
-  "recommendations": ["建议1", "建议2"]
-}`
-
-	return prompt
-}
 
 // parseRiskScoreResponse 解析AI风险评分响应
 func (a *AIRisk) parseRiskScoreResponse(response string, symbol string) (*RiskScore, error) {

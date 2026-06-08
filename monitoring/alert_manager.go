@@ -387,7 +387,7 @@ func (a *AlertSystem) getTemplate(name string) string {
 	if template, ok := a.templates[name]; ok {
 		return template
 	}
-	return fmt.Sprintf("Alert: {{.Level}} - {{.Title}}\n{{.Message}}\n{{.Timestamp}}")
+	return "Alert: {{.Level}} - {{.Title}}\n{{.Message}}\n{{.Timestamp}}"
 }
 
 // formatTemplate 格式化模板

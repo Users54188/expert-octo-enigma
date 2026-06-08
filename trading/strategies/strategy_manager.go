@@ -460,13 +460,6 @@ func max(a, b int) int {
 	return b
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func abs(x float64) float64 {
 	if x < 0 {
 		return -x
