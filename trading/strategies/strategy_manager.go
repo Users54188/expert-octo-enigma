@@ -426,7 +426,7 @@ func (m *StrategyManager) ProcessSignals(ctx context.Context, signals []*Signal)
 
 		// 检查风险
 		if m.riskManager != nil {
-			// 可以在这里进行信号级别的风险检查
+			log.Printf("Risk check for signal %s: risk assessment pending", signal.Symbol)
 		}
 
 		// 发送到信号处理器
