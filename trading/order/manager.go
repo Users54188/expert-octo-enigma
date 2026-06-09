@@ -192,8 +192,11 @@ func (m *OrderManager) SubmitOrder(ctx context.Context, order *Order) (string, e
 // executeOrder 执行订单
 func (m *OrderManager) executeOrder(ctx context.Context, order *Order) error {
 	// 更新状态为已提交
-	m.updateOrderStatus(order.ID, OrderStatusSubmitted, "")
+	m.ordersLock.Lock()
+	order.Status = OrderStatusSubmitted
+	order.UpdateTime = time.Now()
 	order.SubmitTime = time.Now()
+	m.ordersLock.Unlock()
 
 	// 执行订单
 	// 这里应该调用实际的订单执行逻辑
@@ -202,10 +205,13 @@ func (m *OrderManager) executeOrder(ctx context.Context, order *Order) error {
 	time.Sleep(100 * time.Millisecond) // 模拟执行延迟
 
 	// 模拟成交
-	m.updateOrderStatus(order.ID, OrderStatusFilled, "")
+	m.ordersLock.Lock()
+	order.Status = OrderStatusFilled
 	order.FilledQuantity = order.Quantity
 	order.AvgPrice = order.Price
 	order.FillTime = time.Now()
+	order.UpdateTime = time.Now()
+	m.ordersLock.Unlock()
 
 	log.Printf("Order %s executed successfully: %s %s %.2f @ %.2f",
 		order.ID, order.Side, order.Symbol, order.Quantity, order.Price)
