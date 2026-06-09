@@ -321,24 +321,24 @@ func (p *PortfolioOptimizer) calculatePortfolioMetrics(weights map[string]float6
 	for symbol, weight := range weights {
 		// 简化：直接使用历史平均收益率
 		var assetReturn float64
-			for _, asset := range assetData {
-				if asset.Symbol == symbol {
-					assetReturn = asset.MeanReturn
-					break
-				}
+		for _, asset := range assetData {
+			if asset.Symbol == symbol {
+				assetReturn = asset.MeanReturn
+				break
 			}
+		}
 		expectedReturn += weight * assetReturn
 	}
 
 	// 简化的风险计算（忽略相关性）
 	for symbol, weight := range weights {
 		var assetVolatility float64
-			for _, asset := range assetData {
-				if asset.Symbol == symbol {
-					assetVolatility = asset.Volatility
-					break
-				}
+		for _, asset := range assetData {
+			if asset.Symbol == symbol {
+				assetVolatility = asset.Volatility
+				break
 			}
+		}
 		portfolioVariance += (weight * assetVolatility) * (weight * assetVolatility)
 	}
 
@@ -373,13 +373,13 @@ func (p *PortfolioOptimizer) estimateMaxDrawdown(weights map[string]float64, ass
 
 		// 查找资产的历史最大回撤
 		var assetMaxDD float64
-			for _, asset := range assetData {
-				if asset.Symbol == symbol {
-					// 简化：基于收益率序列估算
-					assetMaxDD = p.estimateAssetMaxDrawdown(asset.Returns)
-					break
-				}
+		for _, asset := range assetData {
+			if asset.Symbol == symbol {
+				// 简化：基于收益率序列估算
+				assetMaxDD = p.estimateAssetMaxDrawdown(asset.Returns)
+				break
 			}
+		}
 
 		maxDrawdown += weight * assetMaxDD
 	}
