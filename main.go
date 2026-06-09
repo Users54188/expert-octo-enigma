@@ -264,6 +264,7 @@ func main() {
 }
 
 func loadConfig(path string) (*Config, error) {
+	// #nosec G304 -- path is a hardcoded config file name defined at compile time
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err

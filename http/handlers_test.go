@@ -1,12 +1,11 @@
 package http
 
 import (
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
-
-	"cloudquant/db"
 )
 
 func TestHealthHandler(t *testing.T) {
@@ -31,15 +30,9 @@ func TestHealthHandler(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	// Setup
-	dbPath := "./test.db"
-	if err := db.InitDB(dbPath); err != nil {
-		panic(err)
-	}
-
+	// TestMain 不依赖 sqlite3/CGO，避免在 CI 环境中因 CGO_ENABLED=0 失败。
+	// http 包的 handler 测试仅测试 HTTP 路由层，不需要真实数据库。
+	log.Println("Running http package tests...")
 	code := m.Run()
-
-	// Teardown
-	os.Remove(dbPath)
 	os.Exit(code)
 }

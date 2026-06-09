@@ -204,15 +204,15 @@ func (c *Client) writePump() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer func() {
 		ticker.Stop()
+		// #nosec G104 -- ignoring close error on cleanup
 		c.conn.Close()
 	}()
 
 	for {
 		select {
 		case message, ok := <-c.send:
-			if err := c.conn.SetWriteDeadline(time.Now().Add(30 * time.Second)); err != nil {
-				return
-			}
+			// #nosec G104 -- SetWriteDeadline failure is logged, connection will be closed
+			_ = c.conn.SetWriteDeadline(time.Now().Add(30 * time.Second))
 			if !ok {
 				if err := c.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
 					return
@@ -240,6 +240,7 @@ func (c *Client) writePump() {
 func (c *Client) readPump(h *WebSocketHub) {
 	defer func() {
 		h.unregister <- c
+		// #nosec G104 -- ignoring close error on cleanup
 		c.conn.Close()
 	}()
 

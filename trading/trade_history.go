@@ -23,6 +23,7 @@ func NewTradeHistory(dbPath string) (*TradeHistory, error) {
 
 	// 创建表
 	if err := createTradeTables(db); err != nil {
+		// #nosec G104 -- deliberately ignoring close error after init failure
 		db.Close()
 		return nil, err
 	}
@@ -216,6 +217,10 @@ func (th *TradeHistory) GetOrders(limit int) ([]Order, error) {
 			return nil, err
 		}
 		orders = append(orders, order)
+	}
+	// #nosec G104 -- rows.Err() is checked before returning
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return orders, nil

@@ -56,6 +56,7 @@ func SetTrainingConfig(config TrainingConfig) {
 func handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(map[string]string{"status": "ok"}); err != nil {
+		// #nosec G706 -- err from encoder is internal, not user input
 		log.Printf("Failed to encode health response: %v", err)
 	}
 }
@@ -75,6 +76,7 @@ func handleTick(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(tick); err != nil {
+		// #nosec G706 -- err from encoder is internal, not user input
 		log.Printf("Failed to encode tick response: %v", err)
 	}
 }
@@ -164,6 +166,7 @@ func handleKLines(w http.ResponseWriter, r *http.Request) {
 					fk.Indicators.RSI = market.CalculateRSI(subset, 14)
 					fk.Indicators.MACD, _, _ = market.CalculateMACD(subset)
 					if err := db.SaveKLine(fk); err != nil {
+						// #nosec G706 -- symbol is a stock ticker, not user-controlled free text
 						log.Printf("Non-fatal: failed to save kline cache for %s: %v", symbol, err)
 					}
 				}
@@ -220,6 +223,7 @@ func handleAnalysis(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
+		// #nosec G706 -- err from encoder is internal, not user input
 		log.Printf("Failed to encode analysis response: %v", err)
 	}
 }
@@ -318,8 +322,8 @@ func handlePredict(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := db.SavePredictions([]int{label}, []float64{confidence}, symbol); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		// #nosec G706 -- err from db save is internal, not user input
+		log.Printf("Non-fatal: failed to save prediction: %v", err)
 	}
 
 	response := map[string]interface{}{

@@ -40,6 +40,7 @@ func CloseTradingResources() {
 		autoTradeEnabled = false
 	}
 	if tradeHistory != nil {
+		// #nosec G104 -- ignoring close error during resource cleanup
 		tradeHistory.Close()
 	}
 }
@@ -77,6 +78,7 @@ func handlePortfolio(w http.ResponseWriter, r *http.Request) {
 	summary := positionManager.GetPositionSummary()
 
 	w.Header().Set("Content-Type", "application/json")
+	// #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"data":    summary,
@@ -97,6 +99,7 @@ func handleBalance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+ // #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"data":    balance,
@@ -136,6 +139,7 @@ func handleBuy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+ // #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success":  true,
 		"order_id": orderID,
@@ -175,6 +179,7 @@ func handleSell(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	// #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success":  true,
 		"order_id": orderID,
@@ -211,6 +216,7 @@ func handleCancel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+ // #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 	})
@@ -244,6 +250,7 @@ func handleOrders(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			w.Header().Set("Content-Type", "application/json")
+   // #nosec G104 -- response encoding failure is non-critical in HTTP handler
 			_ = json.NewEncoder(w).Encode(map[string]interface{}{
 				"success": true,
 				"data":    records,
@@ -259,6 +266,7 @@ func handleOrders(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+ // #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"data":    orders,
@@ -287,6 +295,7 @@ func handleTrades(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	// #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"data":    trades,
@@ -309,6 +318,7 @@ func handlePerformance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+ // #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"data":    metrics,
@@ -337,6 +347,7 @@ func handleDailyPnL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+ // #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"data":    pnls,
@@ -353,6 +364,7 @@ func handleRisk(w http.ResponseWriter, r *http.Request) {
 	metrics := riskManager.GetRiskMetrics()
 
 	w.Header().Set("Content-Type", "application/json")
+ // #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"data":    metrics,
@@ -373,6 +385,7 @@ func handleAutoTradeStart(w http.ResponseWriter, r *http.Request) {
 	go runAutoTrade()
 
 	w.Header().Set("Content-Type", "application/json")
+ // #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"message": "自动交易已启动",
@@ -390,6 +403,7 @@ func handleAutoTradeStop(w http.ResponseWriter, r *http.Request) {
 	autoTradeEnabled = false
 
 	w.Header().Set("Content-Type", "application/json")
+ // #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"message": "自动交易已停止",
@@ -399,6 +413,7 @@ func handleAutoTradeStop(w http.ResponseWriter, r *http.Request) {
 // handleAutoTradeStatus 处理自动交易状态
 func handleAutoTradeStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+ // #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"enabled": autoTradeEnabled,

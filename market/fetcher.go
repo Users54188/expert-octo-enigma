@@ -13,6 +13,10 @@ import (
 	"golang.org/x/text/transform"
 )
 
+var httpClient = &http.Client{
+	Timeout: 30 * time.Second,
+}
+
 // FetchTick fetches the latest price for a single stock symbol from Sina API
 func FetchTick(symbol string) (*Tick, error) {
 	url := fmt.Sprintf("http://hq.sinajs.cn/list=%s", symbol)
@@ -94,7 +98,7 @@ func defaultHistoricalDataFetcher(symbol string, days int) ([]KLine, error) {
 	url := fmt.Sprintf("http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=%s&scale=240&ma=no&datalen=%d", symbol, days)
 
 	// #nosec G107 -- External API call to Sina Finance is intentional
-	resp, err := http.Get(url)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return nil, err
 	}

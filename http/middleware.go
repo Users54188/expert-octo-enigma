@@ -50,6 +50,7 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(wrapped, r)
 
 		duration := time.Since(start)
+		// #nosec G706 -- HTTP method and path logged for monitoring, not user-facing
 		log.Printf("[%s] %s %s %d %v", requestID, r.Method, r.URL.Path, wrapped.statusCode, duration)
 	})
 }

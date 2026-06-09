@@ -247,7 +247,8 @@ func (os *OptimizedStorage) GetRange(ctx context.Context, symbol string, start, 
         ORDER BY timestamp`
 
 	if limit > 0 {
-		query += fmt.Sprintf(" LIMIT %d", limit)
+		// limit 为函数参数（int 类型），非用户可控输入，安全拼接整数字面量
+		query += fmt.Sprintf(" LIMIT %d", limit) // #nosec G202 -- LIMIT value from typed int parameter, not user input
 	}
 
 	rows, err := os.db.QueryContext(ctx, query, symbol, start, end)

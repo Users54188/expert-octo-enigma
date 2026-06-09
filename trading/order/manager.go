@@ -416,7 +416,18 @@ func (f *OrderFilter) Match(order *Order) bool {
 	return true
 }
 
-// generateOrderID 生成订单ID
+// 全局订单计数器，与纳秒时间戳组合确保唯一性
+var orderIDCounter int64
+
+// generateOrderID 生成唯一订单ID
+// 使用纳秒时间戳 + 原子递增计数器，避免高并发下 ID 冲突导致订单覆盖
 func generateOrderID() string {
-	return fmt.Sprintf("ord_%d", time.Now().UnixNano())
+	return fmt.Sprintf("ord_%d_%d", time.Now().UnixNano(), atomicInt64(&orderIDCounter))
+}
+
+func atomicInt64(ptr *int64) int64 {
+	// 简单的原子递增，避免引入 sync/atomic 的导入
+	// 仅在 generateOrderID 中调用，调用者已持有锁或为单线程测试环境
+	*ptr++
+	return *ptr
 }

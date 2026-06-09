@@ -171,8 +171,8 @@ func (rm *RiskManager) checkDailyLoss(ctx context.Context) error {
 
 		log.Printf("警告：单日亏损 %.2f%% 超过阈值 %.2f%%，触发紧急平仓", lossPercent*100, rm.config.MaxDailyLoss*100)
 
-		// 异步执行紧急平仓
-		go rm.emergencyClosePositions()
+		// 异步执行紧急平仓，传递 context 确保超时控制
+		go rm.emergencyClosePositions(ctx)
 
 		return ErrDailyLossExceeded
 	}
@@ -181,7 +181,8 @@ func (rm *RiskManager) checkDailyLoss(ctx context.Context) error {
 }
 
 // emergencyClosePositions 紧急平仓
-func (rm *RiskManager) emergencyClosePositions() {
+// ctx 由调用方传入，用于整个平仓过程的超时控制
+func (rm *RiskManager) emergencyClosePositions(ctx context.Context) {
 	log.Println("开始紧急平仓...")
 
 	positions, err := rm.connector.GetCachedPositions()
@@ -190,7 +191,8 @@ func (rm *RiskManager) emergencyClosePositions() {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	// 复用传入的 ctx 而非 context.Background()，确保紧急平仓有超时限制
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
 	for _, pos := range positions {

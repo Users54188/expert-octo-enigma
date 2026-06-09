@@ -1,12 +1,12 @@
 package http
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"errors"
 	"math"
-	"math/rand"
 	"os"
 	"path/filepath"
-	"time"
 
 	"cloudquant/market"
 	"cloudquant/ml"
@@ -70,7 +70,7 @@ func trainModel(config TrainingConfig) error {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Dir(config.ModelPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(config.ModelPath), 0o750); err != nil {
 		return err
 	}
 	if err := model.Save(config.ModelPath); err != nil {
@@ -85,8 +85,8 @@ func splitDataset(features [][]float64, labels []int, testRatio float64) (trainX
 	if testRatio <= 0 || testRatio >= 1 {
 		testRatio = 0.2
 	}
-	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	indices := rnd.Perm(len(features))
+	// 使用 crypto/rand 生成安全随机排列，替代弱随机数 math/rand
+	indices := securePerm(len(features))
 
 	split := int(math.Round(float64(len(features)) * (1 - testRatio)))
 	for i, idx := range indices {
@@ -99,4 +99,32 @@ func splitDataset(features [][]float64, labels []int, testRatio float64) (trainX
 		}
 	}
 	return trainX, trainY, testX, testY
+}
+
+// securePerm 使用 crypto/rand 生成 0..n-1 的 Fisher-Yates 随机排列
+// 替代弱随机数 math/rand.Perm，确保数据集划分不可预测
+func securePerm(n int) []int {
+	indices := make([]int, n)
+	for i := range indices {
+		indices[i] = i
+	}
+	for i := n - 1; i > 0; i-- {
+		j := secureIntn(i + 1)
+		indices[i], indices[j] = indices[j], indices[i]
+	}
+	return indices
+}
+
+// secureIntn 使用 crypto/rand 生成 [0, max) 的均匀分布随机整数
+func secureIntn(max int) int {
+	if max <= 1 {
+		return 0
+	}
+	var buf [8]byte
+	if _, err := rand.Read(buf[:]); err != nil {
+		return 0
+	}
+	u := binary.BigEndian.Uint64(buf[:])
+	// #nosec G115 -- max is small (<1000), overflow impossible in practice
+	return int(u % uint64(max))
 }

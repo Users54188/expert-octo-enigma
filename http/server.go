@@ -58,11 +58,12 @@ func NewServer(config ServerConfig) *Server {
 
 	return &Server{
 		server: &http.Server{
-			Addr:         fmt.Sprintf(":%d", config.Port),
-			Handler:      handler,
-			ReadTimeout:  config.Timeout,
-			WriteTimeout: config.Timeout,
-			IdleTimeout:  120 * time.Second,
+			Addr:              fmt.Sprintf(":%d", config.Port),
+			Handler:           handler,
+			ReadTimeout:       config.Timeout,
+			ReadHeaderTimeout: 10 * time.Second,
+			WriteTimeout:      config.Timeout,
+			IdleTimeout:       120 * time.Second,
 		},
 		config: config,
 	}
