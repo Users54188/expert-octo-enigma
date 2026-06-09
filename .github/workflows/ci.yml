@@ -49,8 +49,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    env:
-      GOTOOLCHAIN: local
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -96,8 +94,6 @@ jobs:
   security:
     name: Security
     runs-on: ubuntu-latest
-    env:
-      GOTOOLCHAIN: local
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

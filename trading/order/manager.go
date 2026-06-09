@@ -316,19 +316,7 @@ func (m *OrderManager) checkRisk(ctx context.Context, order *Order) error {
 	return nil
 }
 
-// updateOrderStatus 更新订单状态
-func (m *OrderManager) updateOrderStatus(orderID string, status OrderStatus, errorMsg string) {
-	m.ordersLock.Lock()
-	defer m.ordersLock.Unlock()
 
-	if order, ok := m.orders[orderID]; ok {
-		order.Status = status
-		order.UpdateTime = time.Now()
-		if errorMsg != "" {
-			order.ErrorMessage = errorMsg
-		}
-	}
-}
 
 // GetPendingOrders 获取待处理订单
 func (m *OrderManager) GetPendingOrders() []*Order {
