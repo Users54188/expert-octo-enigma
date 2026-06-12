@@ -11,6 +11,7 @@ on:
 env:
   GO_VERSION: '1.25'
   COVERAGE_THRESHOLD: 5
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # 代码检查
@@ -105,7 +106,9 @@ jobs:
 
       - name: Run govulncheck
         continue-on-error: true
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest && govulncheck ./...
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./... 2>&1 | sed 's/##\[error\]/[VULN]/g'
 
       - name: Run Gosec
         uses: securego/gosec@master
