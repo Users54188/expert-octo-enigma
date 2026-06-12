@@ -316,8 +316,6 @@ func (m *OrderManager) checkRisk(ctx context.Context, order *Order) error {
 	return nil
 }
 
-
-
 // GetPendingOrders 获取待处理订单
 func (m *OrderManager) GetPendingOrders() []*Order {
 	return m.GetOrders(OrderFilter{Status: OrderStatusPending})
