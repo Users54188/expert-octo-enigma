@@ -56,7 +56,7 @@ func NewServer(config ServerConfig) *Server {
 		SecurityHeadersMiddleware,             // 3. 安全头中间件
 		CORSMiddleware(config.AllowedOrigins), // 4. CORS中间件
 		TimeoutMiddleware(config.Timeout),     // 5. 超时中间件
-		RequestSizeMiddleware(10 << 20),       // 6. 10MB请求大小限制
+		RequestSizeMiddleware(10<<20),         // 6. 10MB请求大小限制
 	)
 
 	// 包装处理器
@@ -69,7 +69,7 @@ func NewServer(config ServerConfig) *Server {
 			SecurityHeadersMiddleware,
 			CORSMiddleware(config.AllowedOrigins),
 			TimeoutMiddleware(config.Timeout),
-			RequestSizeMiddleware(10 << 20),
+			RequestSizeMiddleware(10<<20),
 			AuthMiddleware(func(token string) bool {
 				return token == config.APIKey
 			}),
@@ -99,7 +99,7 @@ func NewServer(config ServerConfig) *Server {
 		SecurityHeadersMiddleware,
 		CORSMiddleware(config.AllowedOrigins),
 		TimeoutMiddleware(config.Timeout),
-		RequestSizeMiddleware(10 << 20),
+		RequestSizeMiddleware(10<<20),
 		RateLimitMiddleware(10),
 	)
 	analysisMux := http.NewServeMux()

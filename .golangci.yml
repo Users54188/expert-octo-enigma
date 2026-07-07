@@ -1,0 +1,4 @@
+issues:
+  exclude:
+    - "SA4023"  # 函数返回值 interface{} 永远不会为 nil
+    - "SA5011"  # 测试文件中的可能空指针解引用（check-after-nil-check 模式）

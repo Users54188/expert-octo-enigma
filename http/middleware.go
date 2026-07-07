@@ -315,5 +315,3 @@ func ValidatePrice(price float64) bool {
 func ValidateAmount(amount float64) bool {
 	return amount >= 100 && amount == float64(int(amount/100))*100
 }
-
-

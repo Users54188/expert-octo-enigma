@@ -15,12 +15,12 @@ func NewMockDataProvider() *MockDataProvider {
 // GetIndustryRotationData 获取行业轮动模拟数据
 func (m *MockDataProvider) GetIndustryRotationData() map[string]float64 {
 	return map[string]float64{
-		"银行":     0.05,
+		"银行":   0.05,
 		"食品饮料": 0.08,
 		"医药生物": 0.03,
 		"电力设备": -0.02,
-		"电子":     0.12,
-		"计算机":   0.06,
+		"电子":   0.12,
+		"计算机":  0.06,
 	}
 }
 
@@ -167,11 +167,11 @@ func (m *MockDataProvider) GetIndustryMapping() map[string]string {
 // GetCorrelationReturns 获取相关性分析模拟数据
 func (m *MockDataProvider) GetCorrelationReturns() map[string][]float64 {
 	return map[string][]float64{
-		"银行":     {0.01, 0.02, -0.01, 0.015, 0.005},
+		"银行":   {0.01, 0.02, -0.01, 0.015, 0.005},
 		"食品饮料": {0.02, 0.03, 0.01, 0.02, 0.015},
 		"医药生物": {0.015, 0.01, 0.02, 0.005, 0.01},
 		"电力设备": {-0.01, 0.005, -0.02, 0.01, 0.005},
-		"电子":     {0.03, 0.025, 0.035, 0.02, 0.03},
+		"电子":   {0.03, 0.025, 0.035, 0.02, 0.03},
 	}
 }
 

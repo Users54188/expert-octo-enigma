@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -291,13 +292,9 @@ func (l *StrategyLoader) GetAllStrategySummaries() []StrategySummary {
 
 // 工具函数 - 文件读写
 func readFile(filename string) ([]byte, error) {
-	// 这里应该实现真实的文件读取
-	// 为了演示，返回模拟数据
-	return []byte{}, fmt.Errorf("file reading not implemented")
+	return os.ReadFile(filename)
 }
 
 func writeFile(filename string, data []byte) error {
-	// 这里应该实现真实的文件写入
-	// 为了演示，返回模拟错误
-	return fmt.Errorf("file writing not implemented")
+	return os.WriteFile(filename, data, 0644)
 }
