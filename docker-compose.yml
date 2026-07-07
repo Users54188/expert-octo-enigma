@@ -12,6 +12,7 @@ services:
       - ./models:/app/models
     environment:
       - LOG_LEVEL=info
+      - API_KEY=${API_KEY}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - BROKER_USERNAME=${BROKER_USERNAME}
       - BROKER_PASSWORD=${BROKER_PASSWORD}

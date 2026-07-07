@@ -7,12 +7,15 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"cloudquant/monitoring"
 )
 
 // Server HTTP服务器
 type Server struct {
-	server *http.Server
-	config ServerConfig
+	server  *http.Server
+	config  ServerConfig
+	monitor *monitoring.RealtimeMonitor
 }
 
 // ServerConfig 服务器配置
@@ -21,6 +24,7 @@ type ServerConfig struct {
 	Timeout        time.Duration
 	MaxConnections int
 	AllowedOrigins []string
+	APIKey         string
 }
 
 // DefaultServerConfig 默认服务器配置
@@ -39,22 +43,73 @@ func NewServer(config ServerConfig) *Server {
 
 	// 注册所有处理器
 	RegisterHandlers(mux)
-	RegisterTradingHandlers(mux)
 	RegisterDashboardRoutes(mux)
 	RegisterAPIHandlers(mux)
 
-	// 创建中间件链
+	// 注册WebSocket端点
+	hub := monitoring.NewWebSocketHub()
+	go hub.Start()
+	mux.HandleFunc("/api/ws/dashboard", hub.HandleWebSocket)
+
+	// 创建中间件链（基础链，不含认证）
 	chain := Chain(
 		RecoveryMiddleware,                    // 1. 恢复中间件（最先执行，捕获panic）
 		LoggerMiddleware,                      // 2. 日志中间件
 		SecurityHeadersMiddleware,             // 3. 安全头中间件
 		CORSMiddleware(config.AllowedOrigins), // 4. CORS中间件
 		TimeoutMiddleware(config.Timeout),     // 5. 超时中间件
-		GzipMiddleware,                        // 6. Gzip压缩中间件
+		RequestSizeMiddleware(10 << 20),       // 6. 10MB请求大小限制
 	)
 
 	// 包装处理器
 	handler := chain(mux)
+
+	// 如果配置了API Key，对交易路由和Dashboard路由添加认证中间件
+	if config.APIKey != "" {
+		authChain := Chain(
+			RecoveryMiddleware,
+			LoggerMiddleware,
+			SecurityHeadersMiddleware,
+			CORSMiddleware(config.AllowedOrigins),
+			TimeoutMiddleware(config.Timeout),
+			RequestSizeMiddleware(10 << 20),
+			AuthMiddleware(func(token string) bool {
+				return token == config.APIKey
+			}),
+		)
+		tradingMux := http.NewServeMux()
+		RegisterTradingHandlers(tradingMux)
+		// 将交易路由挂载到带认证的处理器下
+		mux.Handle("POST /api/trading/", authChain(tradingMux))
+		mux.Handle("GET /api/trading/", authChain(tradingMux))
+
+		// 将Dashboard路由挂载到带认证的处理器下
+		dashboardMux := http.NewServeMux()
+		RegisterDashboardRoutes(dashboardMux)
+		mux.Handle("/api/dashboard/", authChain(dashboardMux))
+		mux.Handle("/api/performance/", authChain(dashboardMux))
+	} else {
+		// 未配置API Key时，路由不加认证（仅限开发环境）
+		RegisterTradingHandlers(mux)
+		RegisterDashboardRoutes(mux)
+	}
+
+	// 对分析API添加速率限制（每秒10个请求）
+	rateLimitedChain := Chain(
+		RecoveryMiddleware,
+		LoggerMiddleware,
+		SecurityHeadersMiddleware,
+		CORSMiddleware(config.AllowedOrigins),
+		TimeoutMiddleware(config.Timeout),
+		RequestSizeMiddleware(10 << 20),
+		RateLimitMiddleware(10),
+	)
+	analysisMux := http.NewServeMux()
+	analysisMux.HandleFunc("GET /api/analysis/{symbol}", handleAnalysis)
+	analysisMux.HandleFunc("GET /api/analysis/batch", handleBatchAnalysis)
+	analysisMux.HandleFunc("POST /api/train", handleTrain)
+	mux.Handle("/api/analysis/", rateLimitedChain(analysisMux))
+	mux.Handle("/api/train", rateLimitedChain(analysisMux))
 
 	return &Server{
 		server: &http.Server{

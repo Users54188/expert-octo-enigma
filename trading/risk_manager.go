@@ -31,12 +31,12 @@ type RiskConfig struct {
 
 // DefaultRiskConfig 默认风险配置
 var DefaultRiskConfig = RiskConfig{
-	InitialCapital:    100.0, // 100元初始资金
-	MaxSinglePosition: 0.3,   // 单只股票最多30%
-	MaxPositions:      3,     // 最多3只股票
-	MaxDailyLoss:      0.1,   // 单日亏损10%全部平仓
-	MinOrderAmount:    100.0, // 最小下单金额100元
-	StopLossPercent:   0.05,  // 单只股票亏损5%止损
+	InitialCapital:    100000.0, // 10万元初始资金
+	MaxSinglePosition: 0.3,      // 单只股票最多30%
+	MaxPositions:      3,        // 最多3只股票
+	MaxDailyLoss:      0.1,      // 单日亏损10%全部平仓
+	MinOrderAmount:    100.0,    // 最小下单金额100元
+	StopLossPercent:   0.05,     // 单只股票亏损5%止损
 }
 
 // NewRiskManager 创建风险管理器
@@ -386,11 +386,16 @@ type OrderRequest struct {
 }
 
 // 计算订单数量
+// A股最小交易单位是100股（1手），向下取整到最近的整手
 func (o *OrderRequest) CalculateQuantity() int {
 	if o.Price <= 0 {
 		return 0
 	}
-	return int(float64(o.Amount)/o.Price/100) * 100 // 按手数（100股）下单
+	// 先计算可购买的股数，再向下取整到100的倍数
+	shares := int(o.Amount / o.Price)
+	// 取整到100的倍数（A股1手=100股）
+	lots := shares / 100
+	return lots * 100
 }
 
 var (

@@ -97,15 +97,8 @@ func handleIndustryRotation(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// 模拟行业收益率数据
-	returns := map[string]float64{
-		"银行":   0.05,
-		"食品饮料": 0.08,
-		"医药生物": 0.03,
-		"电力设备": -0.02,
-		"电子":   0.12,
-		"计算机":  0.06,
-	}
+	// TODO: 替换为真实行业收益率数据
+	returns := mockProvider.GetIndustryRotationData()
 
 	cache, _ := industry.GetGlobalCache("./data/industries.json")
 	analyzer := industry.NewAnalyzer(cache)
@@ -162,14 +155,8 @@ func handleIndustryBenchmark(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleIndustryCorrelation(w http.ResponseWriter, r *http.Request) {
-	// 模拟行业收益率历史数据
-	returns := map[string][]float64{
-		"银行":   {0.01, 0.02, -0.01, 0.015, 0.005},
-		"食品饮料": {0.02, 0.03, 0.01, 0.02, 0.015},
-		"医药生物": {0.015, 0.01, 0.02, 0.005, 0.01},
-		"电力设备": {-0.01, 0.005, -0.02, 0.01, 0.005},
-		"电子":   {0.03, 0.025, 0.035, 0.02, 0.03},
-	}
+	// TODO: 替换为真实行业收益率历史数据
+	returns := mockProvider.GetCorrelationReturns()
 
 	cache, _ := industry.GetGlobalCache("./data/industries.json")
 	analyzer := industry.NewAnalyzer(cache)
@@ -250,25 +237,10 @@ func handleRiskAttribution(w http.ResponseWriter, r *http.Request) {
 	// 创建归因管理器
 	attributionMgr := risk.NewAttributionManager()
 
-	// 模拟数据
-	portfolioReturns := map[string]float64{
-		"sh600000": 0.05,
-		"sh601398": 0.03,
-		"sh600519": 0.08,
-		"sh600036": 0.04,
-	}
-	benchmarkReturns := map[string]float64{
-		"sh600000": 0.04,
-		"sh601398": 0.02,
-		"sh600519": 0.06,
-		"sh600036": 0.03,
-	}
-	industryMapping := map[string]string{
-		"sh600000": "银行",
-		"sh601398": "银行",
-		"sh600519": "食品饮料",
-		"sh600036": "银行",
-	}
+	// TODO: 替换为真实投资组合数据
+	portfolioReturns := mockProvider.GetPortfolioReturns()
+	benchmarkReturns := mockProvider.GetBenchmarkReturns()
+	industryMapping := mockProvider.GetIndustryMapping()
 
 	attribution := attributionMgr.CalculateAttribution(portfolioReturns, benchmarkReturns, industryMapping)
 
@@ -276,18 +248,8 @@ func handleRiskAttribution(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleRiskMetrics(w http.ResponseWriter, r *http.Request) {
-	// 模拟风险指标数据
-	metrics := map[string]interface{}{
-		"sharpe_ratio":  1.25,
-		"sortino_ratio": 1.45,
-		"max_drawdown":  0.08,
-		"volatility":    0.12,
-		"beta":          0.95,
-		"alpha":         0.02,
-		"var_95":        0.025,
-		"var_99":        0.035,
-		"timestamp":     time.Now(),
-	}
+	// TODO: 替换为真实风险指标计算
+	metrics := mockProvider.GetRiskMetrics()
 	respondJSON(w, metrics)
 }
 
@@ -304,34 +266,14 @@ func handleRiskVaR(w http.ResponseWriter, r *http.Request) {
 		method = "historical"
 	}
 
-	// 模拟VaR计算
-	var result struct {
-		Confidence float64   `json:"confidence"`
-		Method     string    `json:"method"`
-		VaR        float64   `json:"var"`
-		CVaR       float64   `json:"cvar"`
-		Timestamp  time.Time `json:"timestamp"`
-	}
-	result.Confidence = confidence
-	result.Method = method
-	result.VaR = 0.025
-	result.CVaR = 0.035
-	result.Timestamp = time.Now()
-
+	// TODO: 替换为真实VaR计算
+	result := mockProvider.GetVaRData(confidence, method)
 	respondJSON(w, result)
 }
 
 func handleRiskFactors(w http.ResponseWriter, r *http.Request) {
-	// 模拟因子暴露数据
-	exposure := map[string]interface{}{
-		"market":     0.95,
-		"size":       0.82,
-		"value":      0.35,
-		"momentum":   0.12,
-		"quality":    0.25,
-		"volatility": -0.15,
-		"timestamp":  time.Now(),
-	}
+	// TODO: 替换为真实因子暴露计算
+	exposure := mockProvider.GetFactorExposure()
 	respondJSON(w, exposure)
 }
 
@@ -581,34 +523,12 @@ func handleReplayList(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, sessions)
 }
 
-// ============ 数据源处理器 ============
+// mockProvider 模拟数据提供者（全局实例）
+var mockProvider = NewMockDataProvider()
 
 func handleProvidersStatus(w http.ResponseWriter, r *http.Request) {
-	// 模拟数据源状态
-	providers := []map[string]interface{}{
-		{
-			"name":       "sina",
-			"healthy":    true,
-			"latency":    150,
-			"priority":   1,
-			"last_check": time.Now(),
-		},
-		{
-			"name":       "eastmoney",
-			"healthy":    true,
-			"latency":    200,
-			"priority":   2,
-			"last_check": time.Now(),
-		},
-		{
-			"name":       "tencent",
-			"healthy":    true,
-			"latency":    180,
-			"priority":   3,
-			"last_check": time.Now(),
-		},
-	}
-
+	// TODO: 替换为真实数据源健康检查
+	providers := mockProvider.GetProviderStatus()
 	respondJSON(w, providers)
 }
 
@@ -617,17 +537,8 @@ func handleProvidersHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleMarketAnomalies(w http.ResponseWriter, r *http.Request) {
-	// 模拟异常事件
-	anomalies := []map[string]interface{}{
-		{
-			"type":      "price_jump",
-			"symbol":    "sh600519",
-			"severity":  "medium",
-			"message":   "价格跳变超过5%",
-			"timestamp": time.Now().Add(-time.Hour),
-		},
-	}
-
+	// TODO: 替换为真实异常检测
+	anomalies := mockProvider.GetMarketAnomalies()
 	respondJSON(w, anomalies)
 }
 
@@ -649,13 +560,9 @@ func handleProviderSwitch(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleMarketQuality(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, map[string]interface{}{
-		"overall_score":  95,
-		"latency_score":  90,
-		"accuracy_score": 98,
-		"coverage_score": 96,
-		"timestamp":      time.Now(),
-	})
+	// TODO: 替换为真实数据质量评估
+	quality := mockProvider.GetMarketQuality()
+	respondJSON(w, quality)
 }
 
 // respondJSON 统一JSON响应

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"cloudquant/trading"
@@ -20,6 +21,7 @@ var (
 	signalHandler     *trading.SignalHandler
 	autoTradeEnabled  bool
 	autoTradeStopChan chan struct{}
+	autoTradeMu       sync.Mutex
 )
 
 // SetTradingComponents 设置交易组件
@@ -35,14 +37,22 @@ func SetTradingComponents(th *trading.TradeHistory, bc *trading.BrokerConnector,
 
 // CloseTradingResources 关闭交易相关资源
 func CloseTradingResources() {
-	if autoTradeEnabled {
-		close(autoTradeStopChan)
-		autoTradeEnabled = false
-	}
+	stopAutoTrade()
 	if tradeHistory != nil {
 		// #nosec G104 -- ignoring close error during resource cleanup
 		tradeHistory.Close()
 	}
+}
+
+// stopAutoTrade 安全停止自动交易（防止重复 close）
+func stopAutoTrade() {
+	autoTradeMu.Lock()
+	defer autoTradeMu.Unlock()
+	if autoTradeStopChan != nil {
+		close(autoTradeStopChan)
+		autoTradeStopChan = nil
+	}
+	autoTradeEnabled = false
 }
 
 // RegisterTradingHandlers 注册交易相关的路由
@@ -71,7 +81,7 @@ func handlePortfolio(w http.ResponseWriter, r *http.Request) {
 
 	// 同步持仓
 	if err := positionManager.SyncPositions(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -94,7 +104,7 @@ func handleBalance(w http.ResponseWriter, r *http.Request) {
 
 	balance, err := brokerConnector.GetCachedBalance()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -124,8 +134,17 @@ func handleBuy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Symbol == "" || req.Price <= 0 || req.Amount <= 0 {
-		http.Error(w, "缺少必要参数", http.StatusBadRequest)
+	// 输入验证
+	if !ValidateSymbol(req.Symbol) {
+		http.Error(w, "无效的股票代码格式", http.StatusBadRequest)
+		return
+	}
+	if !ValidatePrice(req.Price) {
+		http.Error(w, "无效的价格", http.StatusBadRequest)
+		return
+	}
+	if !ValidateAmount(req.Amount) {
+		http.Error(w, "无效的数量（必须为100的整数倍）", http.StatusBadRequest)
 		return
 	}
 
@@ -134,7 +153,7 @@ func handleBuy(w http.ResponseWriter, r *http.Request) {
 
 	orderID, err := orderExecutor.ExecuteBuy(ctx, req.Symbol, req.Price, req.Amount)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -164,8 +183,17 @@ func handleSell(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Symbol == "" || req.Price <= 0 || req.Quantity <= 0 {
-		http.Error(w, "缺少必要参数", http.StatusBadRequest)
+	// 输入验证
+	if !ValidateSymbol(req.Symbol) {
+		http.Error(w, "无效的股票代码格式", http.StatusBadRequest)
+		return
+	}
+	if !ValidatePrice(req.Price) {
+		http.Error(w, "无效的价格", http.StatusBadRequest)
+		return
+	}
+	if req.Quantity <= 0 || req.Quantity%100 != 0 {
+		http.Error(w, "无效的卖出数量（必须为100的正整数倍）", http.StatusBadRequest)
 		return
 	}
 
@@ -174,7 +202,7 @@ func handleSell(w http.ResponseWriter, r *http.Request) {
 
 	orderID, err := orderExecutor.ExecuteSell(ctx, req.Symbol, req.Price, req.Quantity)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -211,7 +239,7 @@ func handleCancel(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	if err := orderExecutor.ExecuteCancel(ctx, req.OrderID); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -246,7 +274,7 @@ func handleOrders(w http.ResponseWriter, r *http.Request) {
 		if tradeHistory != nil {
 			records, dbErr := tradeHistory.GetOrders(limit)
 			if dbErr != nil {
-				http.Error(w, dbErr.Error(), http.StatusInternalServerError)
+				SanitizeError(w, dbErr, http.StatusInternalServerError)
 				return
 			}
 			w.Header().Set("Content-Type", "application/json")
@@ -257,7 +285,7 @@ func handleOrders(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -290,7 +318,7 @@ func handleTrades(w http.ResponseWriter, r *http.Request) {
 
 	trades, err := tradeHistory.GetTrades(limit)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -313,7 +341,7 @@ func handlePerformance(w http.ResponseWriter, r *http.Request) {
 
 	metrics, err := tradeHistory.CalculatePerformance(initialCapital)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -342,7 +370,7 @@ func handleDailyPnL(w http.ResponseWriter, r *http.Request) {
 
 	pnls, err := tradeHistory.GetDailyPnL(days)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -373,6 +401,9 @@ func handleRisk(w http.ResponseWriter, r *http.Request) {
 
 // handleAutoTradeStart 处理启动自动交易
 func handleAutoTradeStart(w http.ResponseWriter, r *http.Request) {
+	autoTradeMu.Lock()
+	defer autoTradeMu.Unlock()
+
 	if autoTradeEnabled {
 		http.Error(w, "自动交易已在运行", http.StatusBadRequest)
 		return
@@ -394,12 +425,16 @@ func handleAutoTradeStart(w http.ResponseWriter, r *http.Request) {
 
 // handleAutoTradeStop 处理停止自动交易
 func handleAutoTradeStop(w http.ResponseWriter, r *http.Request) {
+	autoTradeMu.Lock()
+	defer autoTradeMu.Unlock()
+
 	if !autoTradeEnabled {
 		http.Error(w, "自动交易未运行", http.StatusBadRequest)
 		return
 	}
 
 	close(autoTradeStopChan)
+	autoTradeStopChan = nil
 	autoTradeEnabled = false
 
 	w.Header().Set("Content-Type", "application/json")

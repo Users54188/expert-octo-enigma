@@ -68,9 +68,14 @@ func handleTick(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !ValidateSymbol(symbol) {
+		http.Error(w, "invalid symbol format", http.StatusBadRequest)
+		return
+	}
+
 	tick, err := market.FetchTick(symbol)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -88,6 +93,11 @@ func handleIndicators(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !ValidateSymbol(symbol) {
+		http.Error(w, "invalid symbol format", http.StatusBadRequest)
+		return
+	}
+
 	daysStr := r.URL.Query().Get("days")
 	days := 30
 	if daysStr != "" {
@@ -98,7 +108,7 @@ func handleIndicators(w http.ResponseWriter, r *http.Request) {
 
 	klines, err := market.FetchHistoricalData(symbol, days+30)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -139,6 +149,11 @@ func handleKLines(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !ValidateSymbol(symbol) {
+		http.Error(w, "invalid symbol format", http.StatusBadRequest)
+		return
+	}
+
 	limitStr := r.URL.Query().Get("limit")
 	limit := 100
 	if limitStr != "" {
@@ -149,7 +164,7 @@ func handleKLines(w http.ResponseWriter, r *http.Request) {
 
 	klines, err := db.QueryKLines(symbol, limit)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -192,6 +207,10 @@ func handleAnalysis(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "symbol is required", http.StatusBadRequest)
 		return
 	}
+	if !ValidateSymbol(symbol) {
+		http.Error(w, "invalid symbol format", http.StatusBadRequest)
+		return
+	}
 	if deepSeekAnalyzer == nil {
 		http.Error(w, "deepseek analyzer not configured", http.StatusServiceUnavailable)
 		return
@@ -199,7 +218,7 @@ func handleAnalysis(w http.ResponseWriter, r *http.Request) {
 
 	kline, indicator, err := fetchLatestMarketData(symbol)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -208,7 +227,7 @@ func handleAnalysis(w http.ResponseWriter, r *http.Request) {
 
 	result, err := deepSeekAnalyzer.Analyze(ctx, kline, indicator)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadGateway)
+		SanitizeError(w, err, http.StatusBadGateway)
 		return
 	}
 
@@ -299,6 +318,10 @@ func handlePredict(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "symbol is required", http.StatusBadRequest)
 		return
 	}
+	if !ValidateSymbol(symbol) {
+		http.Error(w, "invalid symbol format", http.StatusBadRequest)
+		return
+	}
 	if mlModel == nil {
 		http.Error(w, "model not loaded", http.StatusServiceUnavailable)
 		return
@@ -306,18 +329,18 @@ func handlePredict(w http.ResponseWriter, r *http.Request) {
 
 	kline, _, err := fetchLatestMarketData(symbol)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 	features, err := latestFeatureBuilder(symbol)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	label, confidence, err := mlModel.Predict(features)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 

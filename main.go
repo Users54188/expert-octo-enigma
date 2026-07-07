@@ -26,7 +26,8 @@ type Config struct {
 		Path string `yaml:"path"`
 	} `yaml:"database"`
 	Http struct {
-		Port int `yaml:"port"`
+		Port   int    `yaml:"port"`
+		APIKey string `yaml:"api_key"`
 	} `yaml:"http"`
 	Log struct {
 		Level string `yaml:"level"`
@@ -239,6 +240,7 @@ func main() {
 	serverConfig.Port = config.Http.Port
 	serverConfig.Timeout = 30 * time.Second
 	serverConfig.AllowedOrigins = []string{"*"}
+	serverConfig.APIKey = config.Http.APIKey
 
 	server := cqhttp.NewServer(serverConfig)
 	go func() {

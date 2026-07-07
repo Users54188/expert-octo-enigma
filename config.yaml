@@ -12,9 +12,10 @@ server:
   http:
     port: 8080
     timeout: 30s
+    api_key: "${API_KEY}"   # API认证密钥，生产环境必须设置
     cors:
       enabled: true
-      origins: ["*"]
+      origins: ["*"]  # 开发环境允许所有来源，生产环境必须限制为实际域名
   
   websocket:
     enabled: true
@@ -23,7 +24,7 @@ server:
     heartbeat: 30s
 
 # 数据库配置 - SQLite优化
- database:
+database:
   driver: "sqlite3"
   dsn: "./data/quant.db?_journal_mode=WAL&_busy_timeout=5000&_cache_size=10000"
   max_open_conns: 10
