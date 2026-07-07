@@ -13,9 +13,8 @@ import (
 
 // Server HTTP服务器
 type Server struct {
-	server  *http.Server
-	config  ServerConfig
-	monitor *monitoring.RealtimeMonitor
+	server *http.Server
+	config ServerConfig
 }
 
 // ServerConfig 服务器配置
