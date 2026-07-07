@@ -416,7 +416,7 @@ func handleReplayStart(w http.ResponseWriter, r *http.Request) {
 
 	session, err := replayEngine.StartSession(req.Symbol, req.StartDate, req.EndDate, req.Speed)
 	if err != nil {
-		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -439,7 +439,7 @@ func handleReplayPause(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := replayEngine.PauseSession(req.ID); err != nil {
-		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
+		SanitizeError(w, err, http.StatusBadRequest)
 		return
 	}
 
@@ -462,7 +462,7 @@ func handleReplayResume(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := replayEngine.ResumeSession(req.ID); err != nil {
-		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
+		SanitizeError(w, err, http.StatusBadRequest)
 		return
 	}
 
@@ -485,7 +485,7 @@ func handleReplayStop(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := replayEngine.StopSession(req.ID); err != nil {
-		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
+		SanitizeError(w, err, http.StatusBadRequest)
 		return
 	}
 
@@ -506,7 +506,7 @@ func handleReplayStatus(w http.ResponseWriter, r *http.Request) {
 
 	session, err := replayEngine.GetSession(id)
 	if err != nil {
-		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusNotFound)
+		SanitizeError(w, err, http.StatusNotFound)
 		return
 	}
 

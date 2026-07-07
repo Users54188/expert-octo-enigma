@@ -447,11 +447,15 @@ func handleAutoTradeStop(w http.ResponseWriter, r *http.Request) {
 
 // handleAutoTradeStatus 处理自动交易状态
 func handleAutoTradeStatus(w http.ResponseWriter, r *http.Request) {
+	autoTradeMu.Lock()
+	enabled := autoTradeEnabled
+	autoTradeMu.Unlock()
+
 	w.Header().Set("Content-Type", "application/json")
 	// #nosec G104 -- response encoding failure is non-critical in HTTP handler
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
-		"enabled": autoTradeEnabled,
+		"enabled": enabled,
 	})
 }
 
@@ -460,11 +464,15 @@ func runAutoTrade() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
+	autoTradeMu.Lock()
+	stopChan := autoTradeStopChan
+	autoTradeMu.Unlock()
+
 	for {
 		select {
 		case <-ticker.C:
 			executeAutoTradeCycle()
-		case <-autoTradeStopChan:
+		case <-stopChan:
 			return
 		}
 	}

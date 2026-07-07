@@ -268,7 +268,7 @@ func handleBatchAnalysis(w http.ResponseWriter, r *http.Request) {
 		}
 		kline, indicator, err := fetchLatestMarketData(symbol)
 		if err != nil {
-			results = append(results, map[string]interface{}{"symbol": symbol, "error": err.Error()})
+			results = append(results, map[string]interface{}{"symbol": symbol, "error": "fetch failed"})
 			continue
 		}
 
@@ -276,7 +276,7 @@ func handleBatchAnalysis(w http.ResponseWriter, r *http.Request) {
 		result, err := deepSeekAnalyzer.Analyze(ctx, kline, indicator)
 		cancel()
 		if err != nil {
-			results = append(results, map[string]interface{}{"symbol": symbol, "error": err.Error()})
+			results = append(results, map[string]interface{}{"symbol": symbol, "error": "analysis failed"})
 			continue
 		}
 		results = append(results, map[string]interface{}{
@@ -301,7 +301,7 @@ func handleTrain(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := trainModel(trainingConfig); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		SanitizeError(w, err, http.StatusInternalServerError)
 		return
 	}
 

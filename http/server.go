@@ -40,12 +40,11 @@ func DefaultServerConfig() ServerConfig {
 func NewServer(config ServerConfig) *Server {
 	mux := http.NewServeMux()
 
-	// 注册所有处理器
+	// 注册公共处理器（不需要认证）
 	RegisterHandlers(mux)
-	RegisterDashboardRoutes(mux)
 	RegisterAPIHandlers(mux)
 
-	// 注册WebSocket端点
+	// 注册WebSocket端点（WebSocket 自身有认证，路径级无需额外中间件）
 	hub := monitoring.NewWebSocketHub()
 	go hub.Start()
 	mux.HandleFunc("/api/ws/dashboard", hub.HandleWebSocket)
@@ -63,7 +62,6 @@ func NewServer(config ServerConfig) *Server {
 	// 包装处理器
 	handler := chain(mux)
 
-	// 如果配置了API Key，对交易路由和Dashboard路由添加认证中间件
 	if config.APIKey != "" {
 		authChain := Chain(
 			RecoveryMiddleware,
@@ -76,19 +74,20 @@ func NewServer(config ServerConfig) *Server {
 				return token == config.APIKey
 			}),
 		)
+
+		// 交易路由（带认证）
 		tradingMux := http.NewServeMux()
 		RegisterTradingHandlers(tradingMux)
-		// 将交易路由挂载到带认证的处理器下
 		mux.Handle("POST /api/trading/", authChain(tradingMux))
 		mux.Handle("GET /api/trading/", authChain(tradingMux))
 
-		// 将Dashboard路由挂载到带认证的处理器下
+		// Dashboard/Performance 路由（带认证）
 		dashboardMux := http.NewServeMux()
 		RegisterDashboardRoutes(dashboardMux)
 		mux.Handle("/api/dashboard/", authChain(dashboardMux))
 		mux.Handle("/api/performance/", authChain(dashboardMux))
 	} else {
-		// 未配置API Key时，路由不加认证（仅限开发环境）
+		// 未配置API Key时，所有路由不加认证（仅限开发环境）
 		RegisterTradingHandlers(mux)
 		RegisterDashboardRoutes(mux)
 	}
