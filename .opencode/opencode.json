@@ -1,0 +1,143 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "deepseek/deepseek-chat",
+  "default_agent": "build",
+  "autoupdate": true,
+  "formatter": true,
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved": 10000
+  },
+  "permission": {
+    "read": "allow",
+    "edit": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "list": "allow",
+    "bash": "allow",
+    "task": "allow",
+    "external_directory": "ask",
+    "todowrite": "allow",
+    "question": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "skill": "allow"
+  },
+  "mcp": {
+    "filesystem": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "."]
+    },
+    "sqlite": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-sqlite", "./data/quant.db"]
+    },
+    "git": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-git"]
+    },
+    "fetch": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-fetch"]
+    },
+    "time": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-time"]
+    },
+    "sequential-thinking": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "context7": {
+      "type": "local",
+      "command": ["npx", "-y", "@upstash/context7-mcp"]
+    }
+  },
+  "agent": {
+    "build": {
+      "mode": "primary",
+      "description": "默认开发代理，有完整工具访问权限",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow"
+      }
+    },
+    "plan": {
+      "mode": "primary",
+      "description": "规划和审查代理，只读分析",
+      "temperature": 0.1,
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      }
+    },
+    "code-reviewer": {
+      "description": "Go代码审查专家，关注代码质量、性能、安全性和可维护性",
+      "mode": "subagent",
+      "temperature": 0.2,
+      "permission": {
+        "edit": "deny",
+        "bash": {
+          "*": "ask",
+          "git diff": "allow",
+          "git log*": "allow",
+          "grep *": "allow",
+          "go vet": "allow",
+          "go fmt": "allow"
+        }
+      },
+      "color": "warning",
+      "prompt": "你是一个Go代码审查专家，专注于代码质量、性能、安全性和可维护性。\n\n审查步骤：\n1. 分析代码结构和模式\n2. 检查错误处理\n3. 评估性能瓶颈\n4. 审查并发安全性\n5. 提供改进建议"
+    },
+    "trading-analyst": {
+      "description": "量化交易分析师，专注于策略分析、回测和风险评估",
+      "mode": "subagent",
+      "temperature": 0.4,
+      "permission": {
+        "edit": "ask",
+        "bash": {
+          "*": "ask",
+          "go test": "allow",
+          "go run": "allow",
+          "grep *": "allow"
+        },
+        "webfetch": "allow",
+        "websearch": "allow"
+      },
+      "color": "accent",
+      "prompt": "你是一个量化交易分析师，擅长分析交易策略的性能、风险指标和市场表现。\n\n分析步骤：\n1. 分析历史市场数据\n2. 评估策略性能指标\n3. 识别风险因素\n4. 提供优化建议\n5. 生成分析报告"
+    },
+    "devops-engineer": {
+      "description": "DevOps专家，专注于Docker容器化、CI/CD管道和监控系统",
+      "mode": "subagent",
+      "temperature": 0.3,
+      "permission": {
+        "edit": "allow",
+        "bash": {
+          "*": "ask",
+          "docker *": "allow",
+          "docker-compose *": "allow",
+          "go build": "allow"
+        }
+      },
+      "color": "info",
+      "prompt": "你是一个DevOps工程师，擅长Docker容器化、CI/CD管道和监控系统配置。\n\n工作步骤：\n1. 分析部署需求\n2. 优化Docker配置\n3. 设置CI/CD管道\n4. 配置监控系统\n5. 提供运维建议"
+    },
+    "data-analyst": {
+      "description": "数据分析师，专注于数据分析和可视化报告生成",
+      "mode": "subagent",
+      "temperature": 0.3,
+      "permission": {
+        "edit": "allow",
+        "bash": "ask",
+        "webfetch": "allow"
+      },
+      "color": "success",
+      "prompt": "你是一个数据分析师，擅长数据分析、可视化和报告生成。\n\n分析步骤：\n1. 清洗和预处理数据\n2. 进行统计分析\n3. 生成可视化图表\n4. 撰写分析报告\n5. 提供业务洞察"
+    }
+  },
+  "plugin": [
+    "opencode-wakatime"
+  ]
+}

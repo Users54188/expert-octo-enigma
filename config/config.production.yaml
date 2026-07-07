@@ -1,6 +1,12 @@
 # CloudQuantBot 生产环境配置文件
 # 适用于6c8g生产环境
 
+# 安全注意事项：
+# 1. 生产环境必须设置 API_KEY 用于交易接口认证
+# 2. 必须使用 HTTPS（通过反向代理如 Nginx 或云负载均衡器）
+# 3. CORS origins 应限制为实际使用的域名
+# 4. 敏感信息（API_KEY, DEEPSEEK_API_KEY等）应通过环境变量注入
+
 app:
   name: "CloudQuantBot"
   version: "1.0.0"
@@ -13,9 +19,10 @@ server:
     port: 8080
     timeout: 30s
     max_body_size: 10MB
+    api_key: "${API_KEY}"   # 生产环境必须设置
     cors:
       enabled: true
-      origins: ["*"]
+      origins: ["https://yourdomain.com"]  # 生产环境限制为实际域名
 
   websocket:
     enabled: true

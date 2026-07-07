@@ -38,7 +38,7 @@ func main() {
 	accuracy, precision, recall := evaluateModel(model, testX, testY)
 	log.Printf("accuracy=%.2f precision=%.2f recall=%.2f", accuracy, precision, recall)
 
-	if err := os.MkdirAll(filepath.Dir(*modelPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(*modelPath), 0o750); err != nil {
 		log.Fatalf("failed to create model dir: %v", err)
 	}
 	if err := model.Save(*modelPath); err != nil {

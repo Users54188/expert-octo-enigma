@@ -63,14 +63,14 @@ type RateLimit struct {
 
 // AlertSystem 告警系统
 type AlertSystem struct {
-	mu          sync.RWMutex
-	alerts      map[string]*Alert // 告警ID -> 告警
-	channels    map[string]*AlertChannel // 渠道名称 -> 渠道配置
-	httpClient  *http.Client
-	templates   map[string]string // 模板名称 -> 模板内容
-	rateLimits  map[string]*RateTracker // 限流追踪
-	rateMu      sync.Mutex              // 保护 rateLimits 的独立锁，与 a.mu 解耦避免死锁
-	stats       *AlertStats
+	mu         sync.RWMutex
+	alerts     map[string]*Alert        // 告警ID -> 告警
+	channels   map[string]*AlertChannel // 渠道名称 -> 渠道配置
+	httpClient *http.Client
+	templates  map[string]string       // 模板名称 -> 模板内容
+	rateLimits map[string]*RateTracker // 限流追踪
+	rateMu     sync.Mutex              // 保护 rateLimits 的独立锁，与 a.mu 解耦避免死锁
+	stats      *AlertStats
 }
 
 // AlertStats 告警统计

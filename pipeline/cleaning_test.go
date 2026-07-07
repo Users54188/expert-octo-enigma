@@ -9,6 +9,7 @@ func TestNewDataCleaner(t *testing.T) {
 	cleaner := NewDataCleaner()
 	if cleaner == nil {
 		t.Fatal("NewDataCleaner returned nil")
+		return
 	}
 
 	if len(cleaner.rules) == 0 {

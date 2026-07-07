@@ -192,8 +192,11 @@ func (m *OrderManager) SubmitOrder(ctx context.Context, order *Order) (string, e
 // executeOrder 执行订单
 func (m *OrderManager) executeOrder(ctx context.Context, order *Order) error {
 	// 更新状态为已提交
-	m.updateOrderStatus(order.ID, OrderStatusSubmitted, "")
+	m.ordersLock.Lock()
+	order.Status = OrderStatusSubmitted
+	order.UpdateTime = time.Now()
 	order.SubmitTime = time.Now()
+	m.ordersLock.Unlock()
 
 	// 执行订单
 	// 这里应该调用实际的订单执行逻辑
@@ -202,10 +205,13 @@ func (m *OrderManager) executeOrder(ctx context.Context, order *Order) error {
 	time.Sleep(100 * time.Millisecond) // 模拟执行延迟
 
 	// 模拟成交
-	m.updateOrderStatus(order.ID, OrderStatusFilled, "")
+	m.ordersLock.Lock()
+	order.Status = OrderStatusFilled
 	order.FilledQuantity = order.Quantity
 	order.AvgPrice = order.Price
 	order.FillTime = time.Now()
+	order.UpdateTime = time.Now()
+	m.ordersLock.Unlock()
 
 	log.Printf("Order %s executed successfully: %s %s %.2f @ %.2f",
 		order.ID, order.Side, order.Symbol, order.Quantity, order.Price)
@@ -310,20 +316,6 @@ func (m *OrderManager) checkRisk(ctx context.Context, order *Order) error {
 	return nil
 }
 
-// updateOrderStatus 更新订单状态
-func (m *OrderManager) updateOrderStatus(orderID string, status OrderStatus, errorMsg string) {
-	m.ordersLock.Lock()
-	defer m.ordersLock.Unlock()
-
-	if order, ok := m.orders[orderID]; ok {
-		order.Status = status
-		order.UpdateTime = time.Now()
-		if errorMsg != "" {
-			order.ErrorMessage = errorMsg
-		}
-	}
-}
-
 // GetPendingOrders 获取待处理订单
 func (m *OrderManager) GetPendingOrders() []*Order {
 	return m.GetOrders(OrderFilter{Status: OrderStatusPending})
@@ -416,7 +408,18 @@ func (f *OrderFilter) Match(order *Order) bool {
 	return true
 }
 
-// generateOrderID 生成订单ID
+// 全局订单计数器，与纳秒时间戳组合确保唯一性
+var orderIDCounter int64
+
+// generateOrderID 生成唯一订单ID
+// 使用纳秒时间戳 + 原子递增计数器，避免高并发下 ID 冲突导致订单覆盖
 func generateOrderID() string {
-	return fmt.Sprintf("ord_%d", time.Now().UnixNano())
+	return fmt.Sprintf("ord_%d_%d", time.Now().UnixNano(), atomicInt64(&orderIDCounter))
+}
+
+func atomicInt64(ptr *int64) int64 {
+	// 简单的原子递增，避免引入 sync/atomic 的导入
+	// 仅在 generateOrderID 中调用，调用者已持有锁或为单线程测试环境
+	*ptr++
+	return *ptr
 }

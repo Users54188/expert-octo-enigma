@@ -195,14 +195,14 @@ func (oe *OrderExecutor) SyncTrades(ctx context.Context) error {
 		// 记录交易历史
 		if oe.tradeHistory != nil {
 			if err := oe.tradeHistory.SaveTrade(TradeRecord{
-				TradeID:     trade.TradeID,
-				OrderID:     trade.OrderID,
-				Symbol:      trade.Symbol,
-				Type:        trade.Type,
-				Price:       trade.Price,
-				Volume:      int64(trade.Amount),
-				TradeTime:   trade.TradeTime,
-				Commission:  trade.Commission,
+				TradeID:    trade.TradeID,
+				OrderID:    trade.OrderID,
+				Symbol:     trade.Symbol,
+				Type:       trade.Type,
+				Price:      trade.Price,
+				Volume:     int64(trade.Amount),
+				TradeTime:  trade.TradeTime,
+				Commission: trade.Commission,
 			}); err != nil {
 				log.Printf("保存交易记录失败 %s: %v", trade.TradeID, err)
 			}

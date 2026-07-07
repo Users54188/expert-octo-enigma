@@ -99,6 +99,7 @@ func main() {
 }
 
 func loadConfig(path string) (*Config, error) {
+	// #nosec G304 -- path from local config file, not user input
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err

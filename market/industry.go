@@ -48,7 +48,9 @@ type IndustryCache struct {
 }
 
 // LoadIndustryMapping 从文件加载行业映射数据
+// filePath 来自配置或内部定义，非用户输入
 func LoadIndustryMapping(filePath string) (*IndustryMapping, error) {
+	// #nosec G304 -- filePath from configuration, not user input
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err

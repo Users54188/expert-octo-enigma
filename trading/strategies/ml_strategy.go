@@ -1,50 +1,39 @@
 package strategies
 
-
-
 import (
 	"context"
 	"fmt"
 	"log"
 	"time"
 
-
-
 	"cloudquant/ml"
 
 	"cloudquant/trading"
-
 )
-
-
 
 // MLStrategy 机器学习策略
 
 type MLStrategy struct {
-
 	*BaseStrategy
 
-	modelProvider  ml.ModelProvider
+	modelProvider ml.ModelProvider
 
-	features       []string // 特征列表
+	features []string // 特征列表
 
-	lookbackDays   int     // 回看天数
+	lookbackDays int // 回看天数
 
-	confidence     float64 // 置信度阈�?
+	confidence float64 // 置信度阈�?
 
 	lastPrediction *MLPrediction
 
-	dataBuffer     []float64 // 价格数据缓存
+	dataBuffer []float64 // 价格数据缓存
 
 }
-
-
 
 // MLPrediction ML预测结果
 
 type MLPrediction struct {
-
-	Signal     string  `json:"signal"`     // buy, sell, hold
+	Signal string `json:"signal"` // buy, sell, hold
 
 	Confidence float64 `json:"confidence"` // 置信�?0-1
 
@@ -52,13 +41,11 @@ type MLPrediction struct {
 
 	FeatureImportance map[string]float64 `json:"feature_importance"` // 特征重要�?
 
-	Timestamp  time.Time `json:"timestamp"`
+	Timestamp time.Time `json:"timestamp"`
 
-	ModelInfo  map[string]interface{} `json:"model_info"` // 模型信息
+	ModelInfo map[string]interface{} `json:"model_info"` // 模型信息
 
 }
-
-
 
 // NewMLStrategy 创建ML策略
 
@@ -66,45 +53,38 @@ func NewMLStrategy() Strategy {
 
 	strategy := &MLStrategy{
 
-		BaseStrategy:  NewBaseStrategy("ml_strategy", 0.3),
+		BaseStrategy: NewBaseStrategy("ml_strategy", 0.3),
 
-		features:      make([]string, 0),
+		features: make([]string, 0),
 
-		lookbackDays:  20,
+		lookbackDays: 20,
 
-		confidence:    0.6,
+		confidence: 0.6,
 
-		dataBuffer:    make([]float64, 0, 100),
+		dataBuffer: make([]float64, 0, 100),
 
 		lastPrediction: nil,
-
 	}
-
-
 
 	// 设置默认参数
 
 	strategy.parameters = map[string]interface{}{
 
-		"lookback_days":      20,
+		"lookback_days": 20,
 
-		"confidence":         0.6,
+		"confidence": 0.6,
 
-		"features":            []string{"price", "volume", "ma5", "ma10", "rsi"},
+		"features": []string{"price", "volume", "ma5", "ma10", "rsi"},
 
-		"update_frequency":   "1h", // 模型更新频率
+		"update_frequency": "1h", // 模型更新频率
 
-		"use_real_time":      true, // 使用实时数据
+		"use_real_time": true, // 使用实时数据
 
 	}
-
-
 
 	return strategy
 
 }
-
-
 
 // Init 初始化策�?
 
@@ -115,8 +95,6 @@ func (m *MLStrategy) Init(ctx context.Context, symbol string, config map[string]
 		return err
 
 	}
-
-
 
 	// 从配置中获取参数
 
@@ -131,8 +109,6 @@ func (m *MLStrategy) Init(ctx context.Context, symbol string, config map[string]
 		m.confidence = confidence
 
 	}
-
-
 
 	// 设置特征列表
 
@@ -156,8 +132,6 @@ func (m *MLStrategy) Init(ctx context.Context, symbol string, config map[string]
 
 	}
 
-
-
 	// 参数验证
 
 	if m.lookbackDays <= 0 {
@@ -172,17 +146,13 @@ func (m *MLStrategy) Init(ctx context.Context, symbol string, config map[string]
 
 	}
 
-
-
-	log.Printf("ML strategy initialized: lookback=%d, confidence=%.2f, features=%v", 
+	log.Printf("ML strategy initialized: lookback=%d, confidence=%.2f, features=%v",
 
 		m.lookbackDays, m.confidence, m.features)
 
 	return nil
 
 }
-
-
 
 // SetModelProvider 设置模型提供�?
 
@@ -194,8 +164,6 @@ func (m *MLStrategy) SetModelProvider(provider ml.ModelProvider) {
 
 }
 
-
-
 // GenerateSignal 生成ML交易信号
 
 func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData) (*Signal, error) {
@@ -206,13 +174,9 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 
 	}
 
-
-
 	// 更新数据缓存
 
 	m.updateDataBuffer(marketData.Close)
-
-
 
 	// 检查是否有足够的训练数�?
 
@@ -222,8 +186,6 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 
 	}
 
-
-
 	// 如果没有模型提供者，返回简单信�?
 
 	if m.modelProvider == nil {
@@ -231,8 +193,6 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 		return m.generateFallbackSignal(marketData)
 
 	}
-
-
 
 	// 准备特征数据
 
@@ -246,8 +206,6 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 
 	}
 
-
-
 	// 进行ML预测
 
 	prediction, err := m.performMLPrediction(ctx, features)
@@ -260,11 +218,7 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 
 	}
 
-
-
 	m.lastPrediction = prediction
-
-
 
 	// 根据预测结果生成信号
 
@@ -274,8 +228,6 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 
 	}
 
-
-
 	var signal *Signal
 
 	var signalType string
@@ -283,8 +235,6 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 	var strength float64
 
 	var reason string
-
-
 
 	switch prediction.Signal {
 
@@ -294,7 +244,7 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 
 		strength = prediction.Confidence
 
-		reason = fmt.Sprintf("ML Buy Signal: confidence=%.2f, probability=%.2f", 
+		reason = fmt.Sprintf("ML Buy Signal: confidence=%.2f, probability=%.2f",
 
 			prediction.Confidence, prediction.Probability)
 
@@ -304,7 +254,7 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 
 		strength = prediction.Confidence
 
-		reason = fmt.Sprintf("ML Sell Signal: confidence=%.2f, probability=%.2f", 
+		reason = fmt.Sprintf("ML Sell Signal: confidence=%.2f, probability=%.2f",
 
 			prediction.Confidence, prediction.Probability)
 
@@ -314,8 +264,6 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 
 	}
 
-
-
 	signal = NewSignal(marketData.Symbol, signalType, strength, marketData.Close)
 
 	signal.TargetPrice = m.calculateTargetPrice(marketData.Close, signalType, 0.06)
@@ -323,8 +271,6 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 	signal.StopLoss = m.calculateStopLoss(marketData.Close, signalType, 0.04)
 
 	signal.Reason = reason
-
-
 
 	// 添加ML预测信息到元数据
 
@@ -340,27 +286,19 @@ func (m *MLStrategy) GenerateSignal(ctx context.Context, marketData *MarketData)
 
 	}
 
-
-
-	log.Printf("ML strategy generated signal: %s %s (confidence: %.3f)", 
+	log.Printf("ML strategy generated signal: %s %s (confidence: %.3f)",
 
 		marketData.Symbol, signalType, prediction.Confidence)
-
-
 
 	return signal, nil
 
 }
-
-
 
 // extractFeatures 提取特征
 
 func (m *MLStrategy) extractFeatures(marketData *MarketData) (map[string]float64, error) {
 
 	features := make(map[string]float64)
-
-
 
 	// 基础价格特征
 
@@ -378,8 +316,6 @@ func (m *MLStrategy) extractFeatures(marketData *MarketData) (map[string]float64
 
 	features["amount"] = marketData.Amount
 
-
-
 	// 技术指标特�?
 
 	features["ma5"] = m.calculateMA(5)
@@ -390,8 +326,6 @@ func (m *MLStrategy) extractFeatures(marketData *MarketData) (map[string]float64
 
 	features["rsi"] = m.calculateRSI(14)
 
-
-
 	// 价格动量特征
 
 	features["price_momentum_1"] = m.calculateMomentum(1)
@@ -400,15 +334,11 @@ func (m *MLStrategy) extractFeatures(marketData *MarketData) (map[string]float64
 
 	features["price_momentum_5"] = m.calculateMomentum(5)
 
-
-
 	// 成交量特�?
 
 	features["volume_ma5"] = m.calculateVolumeMA(5)
 
 	features["volume_ratio"] = m.calculateVolumeRatio()
-
-
 
 	// 波动率特�?
 
@@ -416,13 +346,9 @@ func (m *MLStrategy) extractFeatures(marketData *MarketData) (map[string]float64
 
 	features["volatility_10"] = m.calculateVolatility(10)
 
-
-
 	return features, nil
 
 }
-
-
 
 // performMLPrediction 执行ML预测
 
@@ -433,8 +359,6 @@ func (m *MLStrategy) performMLPrediction(ctx context.Context, features map[strin
 		return nil, fmt.Errorf("model provider not set")
 
 	}
-
-
 
 	// 调用ML模型预测
 
@@ -456,16 +380,13 @@ func (m *MLStrategy) performMLPrediction(ctx context.Context, features map[strin
 
 	}
 
-
-
 	// Build prediction from confidence
 
 	prediction := &MLPrediction{
 
-		Signal:     "hold",
+		Signal: "hold",
 
 		Confidence: confidence,
-
 	}
 
 	if err != nil {
@@ -474,21 +395,13 @@ func (m *MLStrategy) performMLPrediction(ctx context.Context, features map[strin
 
 	}
 
-
-
 	return prediction, nil
 
 }
 
-
-
 // parsePredictionResult 解析预测结果
 
-
-
 // createDefaultPrediction 创建默认预测
-
-
 
 // generateFallbackSignal 生成后备信号（无模型时）
 
@@ -499,8 +412,6 @@ func (m *MLStrategy) generateFallbackSignal(marketData *MarketData) (*Signal, er
 	ma20 := m.calculateMA(20)
 
 	rsi := m.calculateRSI(14)
-
-
 
 	if marketData.Close > ma20 && rsi < 70 {
 
@@ -524,13 +435,9 @@ func (m *MLStrategy) generateFallbackSignal(marketData *MarketData) (*Signal, er
 
 	}
 
-
-
 	return nil, nil
 
 }
-
-
 
 // updateDataBuffer 更新数据缓存
 
@@ -546,8 +453,6 @@ func (m *MLStrategy) updateDataBuffer(price float64) {
 
 }
 
-
-
 // calculateMA 计算移动平均
 
 func (m *MLStrategy) calculateMA(period int) float64 {
@@ -557,8 +462,6 @@ func (m *MLStrategy) calculateMA(period int) float64 {
 		return 0
 
 	}
-
-
 
 	sum := 0.0
 
@@ -572,8 +475,6 @@ func (m *MLStrategy) calculateMA(period int) float64 {
 
 }
 
-
-
 // calculateRSI 计算RSI
 
 func (m *MLStrategy) calculateRSI(period int) float64 {
@@ -584,13 +485,9 @@ func (m *MLStrategy) calculateRSI(period int) float64 {
 
 	}
 
-
-
 	gains := 0.0
 
 	losses := 0.0
-
-
 
 	for i := len(m.dataBuffer) - period; i < len(m.dataBuffer); i++ {
 
@@ -608,13 +505,9 @@ func (m *MLStrategy) calculateRSI(period int) float64 {
 
 	}
 
-
-
 	avgGain := gains / float64(period)
 
 	avgLoss := losses / float64(period)
-
-
 
 	if avgLoss == 0 {
 
@@ -622,15 +515,11 @@ func (m *MLStrategy) calculateRSI(period int) float64 {
 
 	}
 
-
-
 	rs := avgGain / avgLoss
 
 	return 100 - (100 / (1 + rs))
 
 }
-
-
 
 // calculateMomentum 计算动量
 
@@ -642,13 +531,9 @@ func (m *MLStrategy) calculateMomentum(period int) float64 {
 
 	}
 
-
-
 	return (m.dataBuffer[len(m.dataBuffer)-1] - m.dataBuffer[len(m.dataBuffer)-1-period]) / m.dataBuffer[len(m.dataBuffer)-1-period]
 
 }
-
-
 
 // calculateVolumeMA 计算成交量移动平均（简化版，返回估计值）
 
@@ -660,8 +545,6 @@ func (m *MLStrategy) calculateVolumeMA(period int) float64 {
 
 }
 
-
-
 // calculateVolumeRatio 计算成交量比率（简化版�?
 
 func (m *MLStrategy) calculateVolumeRatio() float64 {
@@ -669,8 +552,6 @@ func (m *MLStrategy) calculateVolumeRatio() float64 {
 	return 1.0 // 简化实�?
 
 }
-
-
 
 // calculateVolatility 计算波动�?
 
@@ -682,13 +563,9 @@ func (m *MLStrategy) calculateVolatility(period int) float64 {
 
 	}
 
-
-
 	var sum float64
 
 	var sumSq float64
-
-
 
 	for i := len(m.dataBuffer) - period; i < len(m.dataBuffer); i++ {
 
@@ -698,13 +575,9 @@ func (m *MLStrategy) calculateVolatility(period int) float64 {
 
 	}
 
-
-
 	mean := sum / float64(period)
 
 	variance := (sumSq / float64(period)) - (mean * mean)
-
-
 
 	if variance < 0 {
 
@@ -712,13 +585,9 @@ func (m *MLStrategy) calculateVolatility(period int) float64 {
 
 	}
 
-
-
 	return variance
 
 }
-
-
 
 // calculateTargetPrice 计算目标价格
 
@@ -738,8 +607,6 @@ func (m *MLStrategy) calculateTargetPrice(currentPrice float64, signalType strin
 
 }
 
-
-
 // calculateStopLoss 计算止损价格
 
 func (m *MLStrategy) calculateStopLoss(currentPrice float64, signalType string, stopLossPercent float64) float64 {
@@ -758,21 +625,17 @@ func (m *MLStrategy) calculateStopLoss(currentPrice float64, signalType string, 
 
 }
 
-
-
 // OnTrade 交易回调
 
 func (m *MLStrategy) OnTrade(ctx context.Context, trade *trading.TradeRecord) error {
 
-	log.Printf("ML strategy trade executed: %s %d shares at %.2f", 
+	log.Printf("ML strategy trade executed: %s %d shares at %.2f",
 
 		trade.Symbol, int(trade.Volume), trade.Price)
 
 	return nil
 
 }
-
-
 
 // OnDailyClose 收盘回调
 
@@ -784,8 +647,6 @@ func (m *MLStrategy) OnDailyClose(ctx context.Context, date time.Time) error {
 
 }
 
-
-
 // GetLatestPrediction 获取最新ML预测
 
 func (m *MLStrategy) GetLatestPrediction() *MLPrediction {
@@ -793,8 +654,6 @@ func (m *MLStrategy) GetLatestPrediction() *MLPrediction {
 	return m.lastPrediction
 
 }
-
-
 
 // GetParameters 获取策略参数
 
@@ -812,8 +671,6 @@ func (m *MLStrategy) GetParameters() map[string]interface{} {
 
 }
 
-
-
 // UpdateParameters 更新策略参数
 
 func (m *MLStrategy) UpdateParameters(params map[string]interface{}) error {
@@ -823,8 +680,6 @@ func (m *MLStrategy) UpdateParameters(params map[string]interface{}) error {
 		return err
 
 	}
-
-
 
 	if lookback, ok := params["lookback_days"].(int); ok {
 
@@ -838,9 +693,6 @@ func (m *MLStrategy) UpdateParameters(params map[string]interface{}) error {
 
 	}
 
-
-
 	return nil
 
 }
-

@@ -69,6 +69,8 @@ func (dt *DecisionTree) Predict(features []float64) (int, float64, error) {
 	}
 }
 
+// Save 将决策树模型序列化保存到指定路径
+// path 来自配置文件，非用户输入
 func (dt *DecisionTree) Save(path string) error {
 	if len(dt.nodes) == 0 {
 		return errors.New("model not trained")
@@ -77,10 +79,14 @@ func (dt *DecisionTree) Save(path string) error {
 	if err != nil {
 		return err
 	}
+	// #nosec G304 -- path from model configuration, not user input
 	return os.WriteFile(path, payload, 0o600)
 }
 
+// Load 从指定路径加载决策树模型
+// path 来自配置文件，非用户输入
 func (dt *DecisionTree) Load(path string) error {
+	// #nosec G304 -- path from model configuration, not user input
 	payload, err := os.ReadFile(path)
 	if err != nil {
 		return err

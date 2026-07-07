@@ -1,10 +1,10 @@
 package trading
 
 import (
-    "fmt"
-    "log"
-    "sync"
-    "time"
+	"fmt"
+	"log"
+	"sync"
+	"time"
 )
 
 // PositionManager 持仓管理器
@@ -158,16 +158,16 @@ func (pm *PositionManager) UpdatePosition(trade Trade) error {
 			}
 		}
 
-    case "卖出", "sell":
-        // 卖出：减少持仓或清仓
-        if pos, ok := pm.positions[symbol]; ok {
-            if pos.Amount <= 0 {
-                log.Printf("持仓 %s amount 异常: %d，跳过", symbol, pos.Amount)
-                return nil
-            }
-            sellValue := float64(trade.Amount) * trade.Price
-            costPerShare := pos.TotalCost / float64(pos.Amount)
-            soldCost := float64(trade.Amount) * costPerShare
+	case "卖出", "sell":
+		// 卖出：减少持仓或清仓
+		if pos, ok := pm.positions[symbol]; ok {
+			if pos.Amount <= 0 {
+				log.Printf("持仓 %s amount 异常: %d，跳过", symbol, pos.Amount)
+				return nil
+			}
+			sellValue := float64(trade.Amount) * trade.Price
+			costPerShare := pos.TotalCost / float64(pos.Amount)
+			soldCost := float64(trade.Amount) * costPerShare
 
 			// 计算已实现盈亏
 			profit := sellValue - soldCost

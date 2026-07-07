@@ -2,8 +2,9 @@ package providers
 
 import (
 	"context"
+	crand "crypto/rand"
+	"encoding/binary"
 	"math"
-	"math/rand"
 	"sync"
 	"time"
 )
@@ -11,13 +12,11 @@ import (
 type MockProvider struct {
 	basePrices map[string]float64
 	mu         sync.RWMutex
-	rand       *rand.Rand
 }
 
 func NewMockProvider() *MockProvider {
 	mp := &MockProvider{
 		basePrices: make(map[string]float64),
-		rand:       rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 
 	mp.initBasePrices()
@@ -38,23 +37,23 @@ func (mp *MockProvider) FetchTick(ctx context.Context, symbol string) (*Tick, er
 	mp.mu.RUnlock()
 
 	if !exists {
-		basePrice = 10.0 + mp.rand.Float64()*90.0
+		basePrice = 10.0 + cryptoFloat64()*90.0
 		mp.mu.Lock()
 		mp.basePrices[symbol] = basePrice
 		mp.mu.Unlock()
 	}
 
-	changePercent := (mp.rand.Float64() - 0.5) * 0.1
+	changePercent := (cryptoFloat64() - 0.5) * 0.1
 	price := basePrice * (1 + changePercent)
 
-	bid := price * (1 - mp.rand.Float64()*0.005)
-	ask := price * (1 + mp.rand.Float64()*0.005)
+	bid := price * (1 - cryptoFloat64()*0.005)
+	ask := price * (1 + cryptoFloat64()*0.005)
 
-	volume := int64(mp.rand.Float64() * 10000000)
+	volume := int64(cryptoFloat64() * 10000000)
 	turnover := price * float64(volume)
 
-	high := price * (1 + mp.rand.Float64()*0.02)
-	low := price * (1 - mp.rand.Float64()*0.02)
+	high := price * (1 + cryptoFloat64()*0.02)
+	low := price * (1 - cryptoFloat64()*0.02)
 	open := basePrice
 	preClose := basePrice
 
@@ -85,7 +84,7 @@ func (mp *MockProvider) FetchKLines(ctx context.Context, symbol string, days int
 	mp.mu.RUnlock()
 
 	if !exists {
-		basePrice = 10.0 + mp.rand.Float64()*90.0
+		basePrice = 10.0 + cryptoFloat64()*90.0
 		mp.mu.Lock()
 		mp.basePrices[symbol] = basePrice
 		mp.mu.Unlock()
@@ -97,13 +96,13 @@ func (mp *MockProvider) FetchKLines(ctx context.Context, symbol string, days int
 	for i := days; i >= 1; i-- {
 		date := time.Now().AddDate(0, 0, -i)
 
-		changePercent := (mp.rand.Float64() - 0.48) * 0.08
+		changePercent := (cryptoFloat64() - 0.48) * 0.08
 		open := currentPrice * (1 + changePercent*0.3)
 		close := currentPrice * (1 + changePercent)
-		high := math.Max(open, close) * (1 + mp.rand.Float64()*0.02)
-		low := math.Min(open, close) * (1 - mp.rand.Float64()*0.02)
+		high := math.Max(open, close) * (1 + cryptoFloat64()*0.02)
+		low := math.Min(open, close) * (1 - cryptoFloat64()*0.02)
 
-		volume := int64(mp.rand.Float64() * 10000000)
+		volume := int64(cryptoFloat64() * 10000000)
 		turnover := close * float64(volume)
 
 		change := close - open
@@ -213,4 +212,17 @@ func getMockStockName(symbol string) string {
 		return name
 	}
 	return "模拟股票"
+}
+
+// cryptoFloat64 使用 crypto/rand 生成 [0.0, 1.0) 的安全随机浮点数
+// 用于模拟数据生成场景，不依赖弱随机数 math/rand
+func cryptoFloat64() float64 {
+	var buf [8]byte
+	if _, err := crand.Read(buf[:]); err != nil {
+		// crypto/rand 在 Linux/Windows/macOS 上不会失败，此处为防御性代码
+		return 0.5
+	}
+	// 将随机字节转为 uint64 并归一化到 [0, 1)
+	u := binary.BigEndian.Uint64(buf[:])
+	return float64(u) / float64(1<<64)
 }

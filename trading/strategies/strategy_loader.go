@@ -4,23 +4,24 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
 
 // StrategyConfig 策略配置
 type StrategyConfig struct {
-	Name      string                 `yaml:"name"`      // 策略名称
-	Type      StrategyType           `yaml:"type"`      // 策略类型
-	Enabled   bool                   `yaml:"enabled"`   // 是否启用
-	Weight    float64                `yaml:"weight"`    // 策略权重
+	Name       string                 `yaml:"name"`       // 策略名称
+	Type       StrategyType           `yaml:"type"`       // 策略类型
+	Enabled    bool                   `yaml:"enabled"`    // 是否启用
+	Weight     float64                `yaml:"weight"`     // 策略权重
 	Parameters map[string]interface{} `yaml:"parameters"` // 策略参数
-	Priority  int                    `yaml:"priority"`  // 优先级
+	Priority   int                    `yaml:"priority"`   // 优先级
 }
 
 // StrategyLoader 策略加载器
 type StrategyLoader struct {
-	strategies map[string]Strategy // 已注册的策略
+	strategies map[string]Strategy              // 已注册的策略
 	factories  map[StrategyType]StrategyFactory // 策略工厂
 }
 
@@ -244,13 +245,13 @@ func (l *StrategyLoader) GetEnabledStrategyCount() int {
 
 // StrategySummary 策略摘要信息
 type StrategySummary struct {
-	Name        string      `json:"name"`
-	Type        StrategyType `json:"type"`
-	Enabled     bool        `json:"enabled"`
-	Weight      float64     `json:"weight"`
+	Name        string                 `json:"name"`
+	Type        StrategyType           `json:"type"`
+	Enabled     bool                   `json:"enabled"`
+	Weight      float64                `json:"weight"`
 	Parameters  map[string]interface{} `json:"parameters"`
-	CreatedAt   string      `json:"created_at"`
-	Description string      `json:"description"`
+	CreatedAt   string                 `json:"created_at"`
+	Description string                 `json:"description"`
 }
 
 // GetStrategySummary 获取策略摘要
@@ -291,13 +292,9 @@ func (l *StrategyLoader) GetAllStrategySummaries() []StrategySummary {
 
 // 工具函数 - 文件读写
 func readFile(filename string) ([]byte, error) {
-	// 这里应该实现真实的文件读取
-	// 为了演示，返回模拟数据
-	return []byte{}, fmt.Errorf("file reading not implemented")
+	return os.ReadFile(filename)
 }
 
 func writeFile(filename string, data []byte) error {
-	// 这里应该实现真实的文件写入
-	// 为了演示，返回模拟错误
-	return fmt.Errorf("file writing not implemented")
+	return os.WriteFile(filename, data, 0644)
 }

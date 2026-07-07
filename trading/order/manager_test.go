@@ -15,6 +15,7 @@ func TestNewOrderManager(t *testing.T) {
 	mgr := NewOrderManager(nil, nil, nil, nil, config)
 	if mgr == nil {
 		t.Fatal("NewOrderManager returned nil")
+		return
 	}
 
 	if mgr.maxPendingOrders != 100 {

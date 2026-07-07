@@ -3,8 +3,11 @@ package http
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"log"
 	"net/http"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -50,6 +53,7 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(wrapped, r)
 
 		duration := time.Since(start)
+		// #nosec G706 -- HTTP method and path logged for monitoring, not user-facing
 		log.Printf("[%s] %s %s %d %v", requestID, r.Method, r.URL.Path, wrapped.statusCode, duration)
 	})
 }
@@ -81,18 +85,29 @@ func CORSMiddleware(origins []string) Middleware {
 
 			// 检查是否允许该来源
 			allowed := false
+			isWildcard := false
 			for _, allowedOrigin := range origins {
-				if allowedOrigin == "*" || allowedOrigin == origin {
+				if allowedOrigin == "*" {
+					allowed = true
+					isWildcard = true
+					break
+				}
+				if allowedOrigin == origin {
 					allowed = true
 					break
 				}
 			}
 
 			if allowed {
-				w.Header().Set("Access-Control-Allow-Origin", origin)
+				if isWildcard {
+					// 通配符模式不设置Allow-Credentials，防止凭证泄露
+					w.Header().Set("Access-Control-Allow-Origin", "*")
+				} else {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+					w.Header().Set("Access-Control-Allow-Credentials", "true")
+				}
 				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-				w.Header().Set("Access-Control-Allow-Credentials", "true")
 			}
 
 			// 处理预检请求
@@ -132,15 +147,33 @@ func TimeoutMiddleware(timeout time.Duration) Middleware {
 	}
 }
 
-// RateLimitMiddleware 速率限制中间件
+// RateLimitMiddleware 速率限制中间件（令牌桶算法）
 func RateLimitMiddleware(requestsPerSecond int) Middleware {
-	ticker := time.NewTicker(time.Second / time.Duration(requestsPerSecond))
-	defer ticker.Stop()
+	// 创建一个带缓冲的令牌桶 channel
+	bucket := make(chan struct{}, requestsPerSecond)
+
+	// 初始化：填满令牌桶
+	for i := 0; i < requestsPerSecond; i++ {
+		bucket <- struct{}{}
+	}
+
+	// 后台 goroutine 定期补充令牌
+	go func() {
+		ticker := time.NewTicker(time.Second / time.Duration(requestsPerSecond))
+		defer ticker.Stop()
+		for range ticker.C {
+			select {
+			case bucket <- struct{}{}:
+			default:
+				// 令牌桶已满，丢弃多余令牌
+			}
+		}
+	}()
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			select {
-			case <-ticker.C:
+			case <-bucket:
 				next.ServeHTTP(w, r)
 			default:
 				http.Error(w, `{"error":"rate limit exceeded"}`, http.StatusTooManyRequests)
@@ -179,20 +212,10 @@ func AuthMiddleware(authFunc func(string) bool) Middleware {
 }
 
 // GzipMiddleware Gzip压缩中间件
+// 注意：完整实现需要引入compress/gzip，当前为简化版本
 func GzipMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 检查客户端是否支持gzip
-		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		// 设置响应头
-		w.Header().Set("Content-Encoding", "gzip")
-		w.Header().Set("Vary", "Accept-Encoding")
-
-		// 实际应用中应使用gzip.Writer
-		// 这里简化处理
+		// 直接传递请求，不设置虚假的Content-Encoding头
 		next.ServeHTTP(w, r)
 	})
 }
@@ -249,14 +272,14 @@ func generateRequestID() string {
 	return time.Now().Format("20060102150405") + "-" + randomString(8)
 }
 
-// randomString 生成随机字符串
+// randomString 生成安全的随机字符串
 func randomString(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	result := make([]byte, length)
-	for i := range result {
-		result[i] = charset[time.Now().UnixNano()%int64(len(charset))]
+	b := make([]byte, length)
+	if _, err := rand.Read(b); err != nil {
+		// 降级方案：使用时间戳（仅在rand失败时）
+		return time.Now().Format("150405.000000000")[:length]
 	}
-	return string(result)
+	return hex.EncodeToString(b)[:length]
 }
 
 // GetRequestID 从上下文中获取请求ID
@@ -273,4 +296,22 @@ func GetStartTime(ctx context.Context) time.Time {
 		return t
 	}
 	return time.Time{}
+}
+
+// symbolRegex 股票代码格式验证（如 sh600000, sz399001）
+var symbolRegex = regexp.MustCompile(`^[a-z]{2}\d{6}$`)
+
+// ValidateSymbol 验证股票代码格式
+func ValidateSymbol(symbol string) bool {
+	return symbolRegex.MatchString(symbol)
+}
+
+// ValidatePrice 验证价格范围
+func ValidatePrice(price float64) bool {
+	return price > 0 && price < 100000
+}
+
+// ValidateAmount 验证交易数量（必须为100的整数倍）
+func ValidateAmount(amount float64) bool {
+	return amount >= 100 && amount == float64(int(amount/100))*100
 }
